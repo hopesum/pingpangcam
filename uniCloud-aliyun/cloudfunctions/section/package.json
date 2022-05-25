@@ -1,0 +1,7 @@
+{
+  "name": "section",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}
