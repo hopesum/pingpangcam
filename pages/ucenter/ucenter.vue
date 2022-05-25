@@ -9,13 +9,13 @@
 				<text class="uer-name" v-else>{{$t('mine.notLogged')}}</text>
 			</view>
 		</view>
-		<uni-grid class="grid" :column="4" :showBorder="false" :square="true">
+		<!-- <uni-grid class="grid" :column="4" :showBorder="false" :square="true">
 			<uni-grid-item class="item" v-for="(item,index) in gridList" @click.native="tapGrid(index)" :key="index">
 				<uni-icons class="icon" color="#007AFF" :type="item.icon" size="26"></uni-icons>
 				<text class="text">{{item.text}}</text>
 			</uni-grid-item>
-		</uni-grid>
-		<uni-list class="center-list" v-for="(sublist , index) in ucenterList" :key="index">
+		</uni-grid> -->
+		<!-- <uni-list class="center-list" v-for="(sublist , index) in ucenterList" :key="index">
 			<uni-list-item v-for="(item,i) in sublist" :title="item.title" link :rightText="item.rightText" :key="i"
 				:clickable="true" :to="item.to" @click="ucenterListClick(item)" :show-extra-icon="true"
 				:extraIcon="{type:item.icon,color:'#999'}">
@@ -26,7 +26,7 @@
 					</view>
 				</template>
 			</uni-list-item>
-		</uni-list>
+		</uni-list> -->
 	</view>
 </template>
 

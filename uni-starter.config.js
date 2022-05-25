@@ -17,7 +17,7 @@ export default {
 	"mp": {
 		"weixin": {
 			//微信小程序原始id，微信小程序分享时
-			"id": "gh_33446d7f7a26"
+			"id": "gh_505fa3eb5a88"
 		}
 	},
 	"router": {
@@ -37,31 +37,32 @@ export default {
 		// ],
 		"visitor" : [
 			"/",//注意入口页必须直接写 "/"
-			{"pattern":/^\/pages\/list.*/},	//支持正则表达式
+			// {"pattern":/^\/pages\/list.*/},	//支持正则表达式
 			{"pattern":/^\/pages\/ucenter\/login-page.*/},
-			"/pages/common/webview/webview",
-			"/pages/grid/grid",
+			// "/pages/common/webview/webview",
+			// "/pages/grid/grid",
 			"/pages/ucenter/ucenter",
 			"/pages/ucenter/about/about",
-			"/pages/ucenter/settings/settings"
+			// "/pages/ucenter/settings/settings"
 		],
 		/*
 		login:配置登录类型与优先级
 			未列举到的，或设备环境不支持的选项，将被隐藏。如果你需要在不同平台有不同的配置，直接用条件编译即可
 			根据数组的第0项，决定登录方式的第一优先级。
+			"login": ["weixin","univerify","username", "smsCode", "apple"]
 		*/
-		"login": ["weixin","univerify","username", "smsCode", "apple"]
+		"login": ["weixin"]
 	},
 	//关于应用
 	"about": {
 		//应用名称
-		"appName": "uni-starter",
+		"appName": "国家乒乓球队正品群",
 		//应用logo
 		"logo": "/static/logo.png",
 		//公司名称
-		"company": "北京xx网络技术有限公司",
+		"company": "yugu",
 		//口号
-		"slogan": "云端一体应用快速开发模版",
+		"slogan": "人生苦短，我要打球",
 		//政策协议
 		"agreements": [{
 				"title": "用户服务协议", //如果开启了多语言国际化，本配置将失效。请在 lang/en.js 和 lang/zh-Hans.js中配置

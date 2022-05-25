@@ -1,6 +1,29 @@
 {
-	"pages": [
-		{
+	"pages": [{
+			"path": "pages/match/match",
+			"style": {
+				"navigationBarTitleText": "赛事大厅",
+				"enablePullDownRefresh": false
+			}
+		}, {
+			"path": "pages/match/detail",
+			"style": {
+				"navigationBarTitleText": "赛事详情",
+				"enablePullDownRefresh": false
+			}
+		}, {
+			"path": "pages/match/section",
+			"style": {
+				"navigationBarTitleText": "对战",
+				"enablePullDownRefresh": false
+			}
+		},{
+			"path": "pages/match/board",
+			"style": {
+				"navigationBarTitleText": "榜单",
+				"enablePullDownRefresh": false
+			}
+		}, {
 			"path": "pages/list/list",
 			"style": {
 				// #ifndef APP-PLUS
@@ -28,7 +51,7 @@
 		}, {
 			"path": "pages/list/search/search",
 			"style": {
-				"navigationBarTitleText":"搜索"
+				"navigationBarTitleText": "搜索"
 			}
 		}, {
 			"path": "pages/list/detail",
@@ -171,20 +194,31 @@
 				"enablePullDownRefresh": false
 			}
 		}
+	    ,{
+            "path" : "pages/notice/notice",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "通知公告",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-starter",
+		"navigationBarTitleText": "国家乒乓球队正品群",
 		"navigationBarBackgroundColor": "#FFFFFF",
 		"backgroundColor": "#F8F8F8",
 		"enablePullDownRefresh": false,
 		// "maxWidth":375,
-		"rpxCalcMaxDeviceWidth":375,
-		"rpxCalcBaseDeviceWidth":375
+		"rpxCalcMaxDeviceWidth": 375,
+		"rpxCalcBaseDeviceWidth": 375
 		// "rpxCalcIncludeWidth":0
 	},
 	"condition": {
 		"list": [{
+				"path": "pages/match/match"
+			}, {
 				"path": "pages/list/detail"
 			}, {
 				"path": "pages/list/list"
@@ -206,7 +240,7 @@
 		"borderStyle": "black",
 		"backgroundColor": "#FFFFFF",
 		"list": [{
-			"pagePath": "pages/list/list",
+			"pagePath": "pages/match/match",
 			"iconPath": "static/tabbar/list.png",
 			"selectedIconPath": "static/tabbar/list_active.png",
 			"text": "列表"
@@ -215,8 +249,7 @@
 			"iconPath": "static/tabbar/grid.png",
 			"selectedIconPath": "static/tabbar/grid_active.png",
 			"text": "宫格"
-		}
-		, {
+		}, {
 			"pagePath": "pages/ucenter/ucenter",
 			"iconPath": "static/tabbar/me.png",
 			"selectedIconPath": "static/tabbar/me_active.png",
