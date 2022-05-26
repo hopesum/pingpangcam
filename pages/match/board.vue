@@ -167,7 +167,8 @@
 					},
 					success(res) {
 						that.sectionList = res.result.data
-						that.matchBaseScore = Number(res.result.data[0].matchBaseScore)
+						console.log(res.result.data);
+						that.matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
 						let winnerList = that.sectionList.map(el => el.winner)
 						let loserList = that.sectionList.map(el => el.loser)
 						let users = {}

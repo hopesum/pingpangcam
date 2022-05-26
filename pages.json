@@ -200,17 +200,27 @@
 				"enablePullDownRefresh": true
 			}
 
+		}, {
+			"path": "pages/record/record",
+			"style": {
+				"navigationBarTitleText": "对战记录",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/sign/sign",
+			"style": {
+				"navigationBarTitleText": "打球打卡",
+				"enablePullDownRefresh": true
+			}
+		}, {
+			"path": "pages/sign/record",
+			"style": {
+				"navigationBarTitleText": "打卡记录",
+				"enablePullDownRefresh": true
+			}
 		}
-	    ,{
-            "path" : "pages/record/record",
-            "style" :                                                                                    
-            {
-                "navigationBarTitleText": "",
-                "enablePullDownRefresh": false
-            }
-            
-        }
-    ],
+	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "国家乒乓球队正品群",
@@ -247,22 +257,29 @@
 		"borderStyle": "black",
 		"backgroundColor": "#FFFFFF",
 		"list": [{
-			"pagePath": "pages/match/match",
-			"iconPath": "static/tabbar/list.png",
-			"selectedIconPath": "static/tabbar/list_active.png",
-			"text": "列表"
-		},
-		// {
-		// 	"pagePath": "pages/grid/grid",
-		// 	"iconPath": "static/tabbar/grid.png",
-		// 	"selectedIconPath": "static/tabbar/grid_active.png",
-		// 	"text": "宫格"
-		// }, 
-		{
-			"pagePath": "pages/ucenter/ucenter",
-			"iconPath": "static/tabbar/me.png",
-			"selectedIconPath": "static/tabbar/me_active.png",
-			"text": "我的"
-		}]
+				"pagePath": "pages/match/match",
+				"iconPath": "static/tabbar/list.png",
+				"selectedIconPath": "static/tabbar/list_active.png",
+				"text": "列表"
+			},
+			// {
+			// 	"pagePath": "pages/grid/grid",
+			// 	"iconPath": "static/tabbar/grid.png",
+			// 	"selectedIconPath": "static/tabbar/grid_active.png",
+			// 	"text": "宫格"
+			// }, 
+			{
+				"pagePath": "pages/sign/sign",
+				"iconPath": "static/tabbar/grid.png",
+				"selectedIconPath": "static/tabbar/grid_active.png",
+				"text": "签到"
+			},
+			{
+				"pagePath": "pages/ucenter/ucenter",
+				"iconPath": "static/tabbar/me.png",
+				"selectedIconPath": "static/tabbar/me_active.png",
+				"text": "我的"
+			}
+		]
 	}
 }
