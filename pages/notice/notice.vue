@@ -54,6 +54,10 @@
 			this.matchInfo = params
 			this.getNotice()
 		},
+		async onPullDownRefresh(){
+			await this.getNotice()
+			uni.stopPullDownRefresh()
+		},
 		methods: {
 			handleDelete(notice) {
 				this.oprateNotice = notice
@@ -95,9 +99,9 @@
 				}
 				this.$refs.popup.open()
 			},
-			getNotice() {
+			async getNotice() {
 				let that = this
-				uniCloud.callFunction({
+				await uniCloud.callFunction({
 					name: 'notice',
 					data: {
 						action: 'getNoticeList',

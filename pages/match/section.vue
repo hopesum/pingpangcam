@@ -52,7 +52,7 @@
 			<uni-popup-dialog :duration="2000" @confirm="confirm">
 				<view class="popup-win">
 					<view class="winner-container">
-						<image class="image" :src="winner.avatar" mode="aspectFill" />
+						<image lazy-load class="image" :src="winner.avatar" mode="aspectFill" />
 						<text class="text">{{winner.nickname}}</text>
 					</view>
 					<view class="desc">

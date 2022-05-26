@@ -1,15 +1,18 @@
 <template>
 	<view class="divContainer">
 		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
-			cover="/static/images/user-h.png" @click="handleMatchDetail(match)">
-			<uni-icons class="fire" type="fire" color="#F56C6C" size="20" v-if="index===0"></uni-icons>
+			cover="https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg" @click="handleMatchDetail(match)">
 			<view class="title">
 				<view class="name">
 					<text>{{match.desc}}</text>
 				</view>
-				<uni-icons class="match-delete" type="trash" color="#F56C6C" size="20" @click="deleteMatch(match)">
-				</uni-icons>
 			</view>
+			<template v-slot:actions>
+				<view class="btn-container">
+					<button class="uni-button btn" size="mini" type="primary" @click.stop="editMatch(match)">编辑</button>
+					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteMatch(match)">删除</button>
+				</view>
+			</template>
 		</uni-card>
 		<uni-fab ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
 		<uni-popup ref="popup" type="bottom">
@@ -54,10 +57,14 @@
 		onLoad() {
 			this.getMatchList()
 		},
+		async onPullDownRefresh(){
+			await this.getMatchList()
+			uni.stopPullDownRefresh()
+		},
 		methods: {
-			getMatchList() {
+			async getMatchList() {
 				let that = this
-				uniCloud.callFunction({
+				await uniCloud.callFunction({
 					name: 'match',
 					data: {
 						action: 'getMatchList'
@@ -71,19 +78,38 @@
 			},
 			addMatch() {
 				let that = this
-				uniCloud.callFunction({
-					name: 'match',
-					data: {
-						action: 'addMatch',
-						params: this.formData
-					},
-					success(res) {
-						that.$refs.popup.close()
-						that.getMatchList()
-					}
-				})
+				if (this.formData._id) {
+					uniCloud.callFunction({
+						name: 'match',
+						data: {
+							action: 'updateMatch',
+							params: this.formData
+						},
+						success(res) {
+							that.$refs.popup.close()
+							that.getMatchList()
+						}
+					})
+				} else {
+					uniCloud.callFunction({
+						name: 'match',
+						data: {
+							action: 'addMatch',
+							params: this.formData
+						},
+						success(res) {
+							that.$refs.popup.close()
+							that.getMatchList()
+						}
+					})
+				}
+
 			},
 			updateMatch() {},
+			editMatch(match) {
+				this.formData = match
+				this.$refs.popup.open()
+			},
 			deleteMatch(match) {
 				this.deleteMatchInfo = match
 				this.$refs.dialog.open()
@@ -118,9 +144,9 @@
 					this.addMatch()
 				}
 			},
-			handleMatchDetail(match){
+			handleMatchDetail(match) {
 				uni.navigateTo({
-					url:`/pages/match/detail?matchId=${match._id}&matchName=${match.name}`
+					url: `/pages/match/detail?matchId=${match._id}&matchName=${match.name}`
 				})
 			}
 		}
@@ -173,6 +199,12 @@
 			justify-content: space-between;
 			background: #ffffff;
 			padding: 10px;
+		}
+	}
+	.btn-container {
+		text-align: right;
+		.btn{
+			margin-left: 4px;
 		}
 	}
 </style>

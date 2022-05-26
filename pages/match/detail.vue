@@ -7,8 +7,8 @@
 		<uni-grid :column="3" :show-border="true" :square="true" @change="change">
 			<uni-grid-item v-for="(item ,index) in userList" :index="index" :key="index">
 				<view class="grid-item-box">
-					<image class="image" :src="item.avatar||item.avatar_file.url" mode="aspectFill" />
-					<text class="text">{{item.nickname}}</text>
+					<image class="image" :src="item.avatar||item.avatar_file.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'" mode="aspectFill" />
+					<text class="text">{{item.nickname||'傻子'}}</text>
 					<view v-if="selected(item)" class="grid-dot">
 						<uni-icons size="20" color="#F56C6C" type="checkbox-filled"></uni-icons>
 					</view>
@@ -18,7 +18,7 @@
 		</view>
 		<view class="divFooter">
 			<button class="uni-button cus-btn" plain type="primary" @click="handleBoard">排行榜</button>
-			<button :disabled="battleUser.length<2" class="uni-button cus-btn" type="primary" @click="handleSure">开始比赛</button>
+			<button v-if="battleUser.length>=2" class="uni-button cus-btn" type="primary" @click="handleSure">开始比赛</button>
 		</view>
 	</view>
 </template>
@@ -41,6 +41,10 @@
 			})
 			this.getUserList()
 		},
+		async onPullDownRefresh(){
+			await this.getUserList()
+			uni.stopPullDownRefresh()
+		},
 		methods: {
 			handleSure() {
 				const postData = {
@@ -50,8 +54,8 @@
 							if(el===this.userList[i]._id){
 								return {
 									userId:el,
-									nickname:this.userList[i].nickname,
-									avatar:this.userList[i].avatar||this.userList[i].avatar_file.url
+									nickname:this.userList[i].nickname||'傻子',
+									avatar:this.userList[i].avatar||this.userList[i]?.avatar_file?.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'
 								}
 							}
 						}
@@ -67,8 +71,8 @@
 				}
 				return false
 			},
-			getUserList() {
-				uniCloud.callFunction({
+			async getUserList() {
+				await uniCloud.callFunction({
 					name: 'user',
 					data: {
 						action: 'getUserList',
@@ -85,7 +89,6 @@
 				} = e.detail
 				let userId = this.userList[index]._id
 				let battleIndex = this.battleUser.indexOf(userId)
-				console.log(battleIndex);
 				if (battleIndex !== -1) {
 					this.battleUser.splice(battleIndex, 1)
 				} else {

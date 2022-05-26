@@ -15,7 +15,7 @@
 				<text class="text">{{item.text}}</text>
 			</uni-grid-item>
 		</uni-grid> -->
-		<!-- <uni-list class="center-list" v-for="(sublist , index) in ucenterList" :key="index">
+		<uni-list class="center-list" v-for="(sublist , index) in ucenterList" :key="index">
 			<uni-list-item v-for="(item,i) in sublist" :title="item.title" link :rightText="item.rightText" :key="i"
 				:clickable="true" :to="item.to" @click="ucenterListClick(item)" :show-extra-icon="true"
 				:extraIcon="{type:item.icon,color:'#999'}">
@@ -26,7 +26,7 @@
 					</view>
 				</template>
 			</uni-list-item>
-		</uni-list> -->
+		</uni-list>
 	</view>
 </template>
 
@@ -86,46 +86,53 @@
 							"event": 'signIn',
 							"icon": "compose"
 						},
-						// #ifdef APP-PLUS
+						// // #ifdef APP-PLUS
+						// {
+						// 	"title": this.$t('mine.toEvaluate'),
+						// 	"event": 'gotoMarket',
+						// 	"icon": "hand-thumbsup"
+						// },
+						// //#endif
+						// {
+						// 	"title":this.$t('mine.readArticles'),
+						// 	"to": '/pages/ucenter/read-news-log/read-news-log',
+						// 	"icon": "flag"
+						// },
 						{
-							"title": this.$t('mine.toEvaluate'),
-							"event": 'gotoMarket',
-							"icon": "hand-thumbsup"
-						},
-						//#endif
-						{
-							"title":this.$t('mine.readArticles'),
-							"to": '/pages/ucenter/read-news-log/read-news-log',
-							"icon": "flag"
-						},
-						{
-							"title": this.$t('mine.myScore'),
+							"title": '签到积分',
 							"to": '',
 							"event": 'getScore',
 							"icon": "paperplane"
-						}
-						// #ifdef APP-PLUS
-						, {
-							"title": this.$t('mine.invite'),
-							"event": 'share',
-							"icon": "redo"
-						}
-						// #endif
+						},
+						{
+							"title":'对战记录',
+							"to": '/pages/record/record',
+							"icon": "flag"
+						},
+						// // #ifdef APP-PLUS
+						// , {
+						// 	"title": this.$t('mine.invite'),
+						// 	"event": 'share',
+						// 	"icon": "redo"
+						// }
+						// // #endif
 					],
-					[{
-						"title": this.$t('mine.feedback'),
-						"to": '/uni_modules/uni-feedback/pages/opendb-feedback/opendb-feedback',
-						"icon": "help"
-					}, {
+					[
+					// 	{
+					// 	"title": this.$t('mine.feedback'),
+					// 	"to": '/uni_modules/uni-feedback/pages/opendb-feedback/opendb-feedback',
+					// 	"icon": "help"
+					// },
+					{
 						"title": this.$t('mine.settings'),
 						"to": '/pages/ucenter/settings/settings',
 						"icon": "gear"
 					}],
-					[{
-						"title": this.$t('mine.about'),
-						"to": '/pages/ucenter/about/about',
-						"icon": "info"
-					}]
+					// [{
+					// 	"title": this.$t('mine.about'),
+					// 	"to": '/pages/ucenter/about/about',
+					// 	"icon": "info"
+					// }]
 				],
 				listStyles: {
 					"height": "150rpx", // 边框高度

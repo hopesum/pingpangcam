@@ -127,15 +127,20 @@
 			this.getSectionList()
 			this.getNotice()
 		},
+		async onPullDownRefresh(){
+			await this.getSectionList()
+			await this.getNotice()
+			uni.stopPullDownRefresh()
+		},
 		methods: {
 			onClickItem(e) {
 				if (this.current != e.currentIndex) {
 					this.current = e.currentIndex;
 				}
 			},
-			getNotice() {
+			async getNotice() {
 				let that = this
-				uniCloud.callFunction({
+				await uniCloud.callFunction({
 					name: 'notice',
 					data: {
 						action: 'getNoticeList',
@@ -151,9 +156,9 @@
 					url:'/pages/notice/notice?matchId=' + this.matchInfo.matchId
 				})
 			},
-			getSectionList() {
+			async getSectionList() {
 				let that = this
-				uniCloud.callFunction({
+				await uniCloud.callFunction({
 					name: 'section',
 					data: {
 						action: 'getSectionList',
