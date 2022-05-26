@@ -1,7 +1,7 @@
 <template>
 	<view class="divContainer">
 		<uni-card class="card-container" title="积分规则">
-			<view>1.所有参赛选手底分{{rules.baseIntegral}}；</view>
+			<view>1.所有参赛选手底分{{matchBaseInfo.matchBaseScore}}；</view>
 			<view>2.同级别选手之间胜者{{rules.sameRuleWin}}分，负者{{rules.sameRuleFail}}分；</view>
 			<view>3.第二级别选手与第一级别选手交战时：</view>
 			<view class="rule-box">
@@ -64,9 +64,9 @@
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<uni-forms :modelValue="rules">
-					<uni-forms-item required label="底分" name="baseIntegral">
+				<!-- 	<uni-forms-item required label="底分" name="baseIntegral">
 						<uni-easyinput type="number" v-model="rules.baseIntegral" />
-					</uni-forms-item>
+					</uni-forms-item> -->
 					<uni-forms-item required label="同级胜" name="sameRuleWin">
 						<uni-easyinput type="number" v-model="rules.sameRuleWin" />
 					</uni-forms-item>
@@ -120,7 +120,7 @@
 				items: ['三局两胜', '五局三胜', '七局四胜'],
 				levels: ['一级选手', '二级选手'],
 				rules: {
-					baseIntegral: 500,
+					// baseIntegral: 500,
 					sameRuleWin: 100,
 					sameRuleFail: 20,
 					unSameRuleLowLevelWin: 120,
@@ -245,6 +245,7 @@
 				// integral
 				const postData = {
 					matchId: this.matchBaseInfo.matchId,
+					matchBaseScore: this.matchBaseInfo.matchBaseScore,
 					winner: {
 						...this.winner,
 						fail: loser.win

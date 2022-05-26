@@ -1,20 +1,21 @@
 <template>
 	<view class="divContainer">
 		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
-			cover="https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg" @click="handleMatchDetail(match)">
+			cover="https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg"
+			@click="handleMatchDetail(match)">
 			<view class="title">
 				<view class="name">
 					<text>{{match.desc}}</text>
 				</view>
 			</view>
 			<template v-slot:actions>
-				<view class="btn-container">
+				<view v-if="isAdmin" class="btn-container">
 					<button class="uni-button btn" size="mini" type="primary" @click.stop="editMatch(match)">编辑</button>
 					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteMatch(match)">删除</button>
 				</view>
 			</template>
 		</uni-card>
-		<uni-fab ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
+		<uni-fab v-if="isAdmin" ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<view class="form-header">
@@ -24,6 +25,9 @@
 				<uni-forms :modelValue="formData">
 					<uni-forms-item required label="名称" name="name">
 						<uni-easyinput type="text" v-model="formData.name" />
+					</uni-forms-item>
+					<uni-forms-item required label="底分" name="baseScore">
+						<uni-easyinput type="text" v-model="formData.baseScore" />
 					</uni-forms-item>
 					<uni-forms-item required label="描述" name="desc">
 						<uni-easyinput type="text" v-model="formData.desc" />
@@ -42,11 +46,16 @@
 </template>
 
 <script>
+	import {
+		mapState
+	} from 'vuex'
+
 	export default {
 		data() {
 			return {
 				matchList: [],
 				formData: {
+					baseScore:0,
 					name: '',
 					desc: '',
 					createTime: new Date()
@@ -54,10 +63,21 @@
 				deleteMatchInfo: {}
 			}
 		},
+		computed: {
+			...mapState({
+				role: state => state.user.info.role||[]
+			}),
+			isAdmin(){
+				if(this.role.indexOf('admin')!==-1){
+					return true
+				}
+				return false
+			}
+		},
 		onLoad() {
 			this.getMatchList()
 		},
-		async onPullDownRefresh(){
+		async onPullDownRefresh() {
 			await this.getMatchList()
 			uni.stopPullDownRefresh()
 		},
@@ -130,6 +150,7 @@
 			},
 			fabClick() {
 				this.formData = {
+					baseScore:0,
 					name: '',
 					desc: '',
 					createTime: new Date()
@@ -146,7 +167,7 @@
 			},
 			handleMatchDetail(match) {
 				uni.navigateTo({
-					url: `/pages/match/detail?matchId=${match._id}&matchName=${match.name}`
+					url: `/pages/match/detail?matchId=${match._id}&matchName=${match.name}&matchBaseScore=${match.baseScore}`
 				})
 			}
 		}
@@ -201,9 +222,11 @@
 			padding: 10px;
 		}
 	}
+
 	.btn-container {
 		text-align: right;
-		.btn{
+
+		.btn {
 			margin-left: 4px;
 		}
 	}

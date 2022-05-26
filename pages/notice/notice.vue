@@ -5,7 +5,7 @@
 			<template v-slot:actions>
 				<uni-row>
 					<uni-col :span="24">
-						<view class="btn-container">
+						<view v-if="isAdmin" class="btn-container">
 							<button class="uni-button btn" size="mini" type="primary" @click="handleEdit(notice)">修改</button>
 							<button class="uni-button btn" size="mini" type="warn" @click="handleDelete(notice)">删除</button>
 						</view>
@@ -13,7 +13,7 @@
 				</uni-row>
 			</template>
 		</uni-card>
-		<uni-fab ref="fab" horizontal="right" vertical="bottom" @fabClick="handleAddNotice" />
+		<uni-fab ref="fab" v-if="isAdmin" horizontal="right" vertical="bottom" @fabClick="handleAddNotice" />
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<view class="form-header">
@@ -38,6 +38,9 @@
 </template>
 
 <script>
+	import {
+		mapState
+	} from 'vuex'
 	export default {
 		data() {
 			return {
@@ -48,6 +51,17 @@
 					createTime: new Date(),
 					content: ''
 				},
+			}
+		},
+		computed: {
+			...mapState({
+				role: state => state.user.info.role||[]
+			}),
+			isAdmin(){
+				if(this.role.indexOf('admin')!==-1){
+					return true
+				}
+				return false
 			}
 		},
 		onLoad(params) {

@@ -51,7 +51,7 @@ export default {
 			根据数组的第0项，决定登录方式的第一优先级。
 			"login": ["weixin","univerify","username", "smsCode", "apple"]
 		*/
-		"login": ["weixin"]
+		"login": ["weixin","username", "smsCode"]
 	},
 	//关于应用
 	"about": {
@@ -60,7 +60,7 @@ export default {
 		//应用logo
 		"logo": "/static/logo.png",
 		//公司名称
-		"company": "yugu",
+		"company": "yuguaa",
 		//口号
 		"slogan": "人生苦短，我要打球",
 		//政策协议

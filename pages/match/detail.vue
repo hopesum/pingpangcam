@@ -29,6 +29,7 @@
 			return {
 				matchId: '',
 				matchName: '',
+				matchBaseScore:0,
 				userList: [],
 				battleUser: []
 			}
@@ -36,6 +37,7 @@
 		onLoad(params) {
 			this.matchId = params.matchId
 			this.matchName = params.matchName
+			this.matchBaseScore = params.matchBaseScore
 			uni.setNavigationBarTitle({
 				title: params.matchName
 			})
@@ -49,6 +51,7 @@
 			handleSure() {
 				const postData = {
 					matchId:this.matchId,
+					matchBaseScore:this.matchBaseScore,
 					battleUser:this.battleUser.map(el=>{
 						for (var i = 0; i < this.userList.length; i++) {
 							if(el===this.userList[i]._id){

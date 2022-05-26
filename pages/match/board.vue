@@ -10,7 +10,7 @@
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
 						<uni-row>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral}}</view>
+								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
 							</uni-col>
 							<uni-col :span="8">
 								<view class="item">胜率：{{user.rate}}</view>
@@ -67,7 +67,8 @@
 				items: ['积分榜', '胜率榜', 'KD榜'],
 				matchInfo: {},
 				sectionList: [],
-				users: {}
+				users: {},
+				matchBaseScore:0
 			}
 		},
 		computed: {
@@ -83,7 +84,7 @@
 						integral: user.integral,
 						rate: Math.ceil(((user.winMatch || 0) / ((user.winMatch || 0) + (user.failMatch || 0))) *
 							100),
-						KD: (user.win || 0) / (user.fail || 1).toFixed(2),
+						KD: Number((user.win || 0) / (user.fail || 1)).toFixed(2),
 						winMatch: user.winMatch,
 						failMatch: user.failMatch,
 						win: user.win,
@@ -166,6 +167,7 @@
 					},
 					success(res) {
 						that.sectionList = res.result.data
+						that.matchBaseScore = Number(res.result.data[0].matchBaseScore)
 						let winnerList = that.sectionList.map(el => el.winner)
 						let loserList = that.sectionList.map(el => el.loser)
 						let users = {}
