@@ -2,7 +2,15 @@
 	<view class="divContainer">
 		<view :class="['tip-btn',isCanSign?'can-sign':'cant-sign']" @click="handleSign">
 			<text>{{dateFormat(time)}}</text>
-			<text>打卡</text>
+			<text>{{isCanSign?'打卡':'无法打卡'}}</text>
+		</view>
+		<view v-if="!isCanSign" class="err-content">
+			latitude: {{latitude}},
+			longitude: {{longitude}},
+			address: {{address}},
+			currentLatitude: {{currentLatitude}},
+			currentLongitude: {{currentLongitude}},
+			currentAddress: {{currentAddress}},
 		</view>
 		<view class="divFooter">
 			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">打卡记录</button>
@@ -47,7 +55,7 @@
 				let d = Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2)))
 				console.log(d, '******');
 				// 0.001  100m
-				if (d <= 0.001) {
+				if (d <= 0.02) {
 					return true
 				}
 				return false
@@ -192,11 +200,12 @@
 			},
 			handleSign() {
 				let that = this
-				if(!this.isCanSign){
+				if (!this.isCanSign) {
 					uni.showToast({
-						icon:'none',
-						title:'无法打卡'
+						icon: 'none',
+						title: '无法打卡'
 					})
+					return
 				}
 				// 当天打卡可以无限次数更新
 				let oprate = 'add'
@@ -213,8 +222,8 @@
 						data: {
 							action: 'addSignRecord',
 							params: {
-								userId:this.$store.state.user.info._id,
-								userName:this.$store.state.user.info.nickname,
+								userId: this.$store.state.user.info._id,
+								userName: this.$store.state.user.info.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
 								longitude: this.currentLongitude
@@ -222,8 +231,8 @@
 						},
 						success() {
 							uni.showToast({
-								icon:'none',
-								title:'打卡成功'
+								icon: 'none',
+								title: '打卡成功'
 							})
 							that.getSignRecord()
 						}
@@ -235,8 +244,8 @@
 							action: 'updateSignRecord',
 							params: {
 								_id: that.lastSign._id,
-								userId:this.$store.state.user.info._id,
-								userName:this.$store.state.user.info.nickname,
+								userId: this.$store.state.user.info._id,
+								userName: this.$store.state.user.info.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
 								longitude: this.currentLongitude
@@ -244,8 +253,8 @@
 						},
 						success() {
 							uni.showToast({
-								icon:'none',
-								title:'打卡成功'
+								icon: 'none',
+								title: '打卡成功'
 							})
 							that.getSignRecord()
 						}
@@ -258,8 +267,8 @@
 					name: 'signRecord',
 					data: {
 						action: 'getSignRecordList',
-						params:{
-							userId:this.$store.state.user.info._id,
+						params: {
+							userId: this.$store.state.user.info._id,
 						}
 					},
 					success(res) {
@@ -267,9 +276,9 @@
 					}
 				})
 			},
-			handleSignRecord(){
+			handleSignRecord() {
 				uni.navigateTo({
-					url:'/pages/sign/record'
+					url: '/pages/sign/record'
 				})
 			}
 		}
@@ -319,5 +328,11 @@
 			flex: 1;
 			margin: 4px;
 		}
+	}
+	.err-content{
+		position: fixed;
+		top: 0;
+		font-size: 12px;
+		color: #E6A23C;
 	}
 </style>
