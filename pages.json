@@ -201,10 +201,10 @@
 			}
 
 		}, {
-			"path": "pages/record/record",
+			"path": "pages/section/section",
 			"style": {
 				"navigationBarTitleText": "对战记录",
-				"enablePullDownRefresh": false
+				"enablePullDownRefresh": true
 			}
 
 		}, {
@@ -219,6 +219,13 @@
 				"navigationBarTitleText": "打卡记录",
 				"enablePullDownRefresh": true
 			}
+		}, {
+			"path": "pages/user/user",
+			"style": {
+				"navigationBarTitleText": "用户管理",
+				"enablePullDownRefresh": true
+			}
+
 		}
 	],
 	"globalStyle": {
@@ -260,7 +267,7 @@
 				"pagePath": "pages/match/match",
 				"iconPath": "static/tabbar/list.png",
 				"selectedIconPath": "static/tabbar/list_active.png",
-				"text": "列表"
+				"text": "赛事"
 			},
 			// {
 			// 	"pagePath": "pages/grid/grid",
@@ -272,7 +279,7 @@
 				"pagePath": "pages/sign/sign",
 				"iconPath": "static/tabbar/grid.png",
 				"selectedIconPath": "static/tabbar/grid_active.png",
-				"text": "签到"
+				"text": "打卡"
 			},
 			{
 				"pagePath": "pages/ucenter/ucenter",

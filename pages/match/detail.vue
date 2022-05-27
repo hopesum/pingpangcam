@@ -1,24 +1,28 @@
 <template>
 	<view class="divContaienr">
 		<view class="divContent">
-		<view class="title">
-			对战双方
-		</view>
-		<uni-grid :column="3" :show-border="true" :square="true" @change="change">
-			<uni-grid-item v-for="(item ,index) in userList" :index="index" :key="index">
-				<view class="grid-item-box">
-					<image class="image" :src="item.avatar||item.avatar_file.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'" mode="aspectFill" />
-					<text class="text">{{item.nickname||'傻子'}}</text>
-					<view v-if="selected(item)" class="grid-dot">
-						<uni-icons size="20" color="#F56C6C" type="checkbox-filled"></uni-icons>
+			<view class="title">
+				请选择对战双方
+			</view>
+			<uni-grid :column="3" :show-border="true" :square="true" @change="change">
+				<uni-grid-item v-for="(item ,index) in userList" :index="index" :key="index">
+					<view class="grid-item-box">
+						<image class="image"
+							:src="item.avatar||item.avatar_file.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
+							mode="aspectFill" />
+						<text class="text">{{item.nickname||'傻子'}}</text>
+						<view v-if="selected(item)" class="grid-dot">
+							<uni-icons size="20" color="#F56C6C" type="checkbox-filled"></uni-icons>
+						</view>
 					</view>
-				</view>
-			</uni-grid-item>
-		</uni-grid>
+				</uni-grid-item>
+			</uni-grid>
 		</view>
 		<view class="divFooter">
+			<button class="uni-button cus-btn" plain type="warn" @click="handleSection">对战记录</button>
 			<button class="uni-button cus-btn" plain type="primary" @click="handleBoard">排行榜</button>
-			<button v-if="battleUser.length>=2" class="uni-button cus-btn" type="primary" @click="handleSure">开始比赛</button>
+			<button v-if="battleUser.length>=2" class="uni-button cus-btn" type="primary"
+				@click="handleSure">开始比赛</button>
 		</view>
 	</view>
 </template>
@@ -29,7 +33,7 @@
 			return {
 				matchId: '',
 				matchName: '',
-				matchBaseScore:0,
+				matchBaseScore: 0,
 				userList: [],
 				battleUser: []
 			}
@@ -43,29 +47,30 @@
 			})
 			this.getUserList()
 		},
-		async onPullDownRefresh(){
+		async onPullDownRefresh() {
 			await this.getUserList()
 			uni.stopPullDownRefresh()
 		},
 		methods: {
 			handleSure() {
 				const postData = {
-					matchId:this.matchId,
-					matchBaseScore:this.matchBaseScore,
-					battleUser:this.battleUser.map(el=>{
+					matchId: this.matchId,
+					matchBaseScore: this.matchBaseScore,
+					battleUser: this.battleUser.map(el => {
 						for (var i = 0; i < this.userList.length; i++) {
-							if(el===this.userList[i]._id){
+							if (el === this.userList[i]._id) {
 								return {
-									userId:el,
-									nickname:this.userList[i].nickname||'傻子',
-									avatar:this.userList[i].avatar||this.userList[i]?.avatar_file?.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'
+									userId: el,
+									nickname: this.userList[i].nickname || '傻子',
+									avatar: this.userList[i].avatar || this.userList[i]?.avatar_file?.url ||
+										'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'
 								}
 							}
 						}
 					})
 				}
 				uni.navigateTo({
-					url:'/pages/match/section?matchBaseInfo='+encodeURIComponent(JSON.stringify(postData))
+					url: '/pages/match/section?matchBaseInfo=' + encodeURIComponent(JSON.stringify(postData))
 				})
 			},
 			selected(item) {
@@ -100,11 +105,16 @@
 					}
 				}
 			},
-			handleBoard(){
+			handleBoard() {
 				uni.navigateTo({
-					url:`/pages/match/board?matchId=${this.matchId}&matchName=${this.matchName}`
+					url: `/pages/match/board?matchId=${this.matchId}&matchName=${this.matchName}`
 				})
-			}	
+			},
+			handleSection() {
+				uni.navigateTo({
+					url: `/pages/section/section?matchId=${this.matchId}&matchName=${this.matchName}`
+				})
+			}
 		}
 	}
 </script>
@@ -112,22 +122,28 @@
 <style lang="scss" scoped>
 	.divContaienr {
 		position: relative;
-		.divContent{
+		padding-bottom: 60px;
+
+		.divContent {
 			padding: 10px 20px;
 			margin-bottom: 60px;
 		}
-		.divFooter{
+
+		.divFooter {
 			box-sizing: border-box;
 			position: fixed;
 			bottom: 0;
 			width: 100%;
 			padding: 10px;
 			display: flex;
-			.cus-btn{
+			background: #ffffff;
+			.cus-btn {
+				font-size: 14px;
 				flex: 1;
 				margin: 4px;
 			}
 		}
+
 		.title {
 			text-align: center;
 			margin: 10px 0;

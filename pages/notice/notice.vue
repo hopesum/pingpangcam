@@ -5,15 +5,18 @@
 			<template v-slot:actions>
 				<uni-row>
 					<uni-col :span="24">
-						<view v-if="isAdmin" class="btn-container">
-							<button class="uni-button btn" size="mini" type="primary" @click="handleEdit(notice)">修改</button>
-							<button class="uni-button btn" size="mini" type="warn" @click="handleDelete(notice)">删除</button>
+						<view v-if="hasLogin&&uniIDHasRole('admin')" class="btn-container">
+							<button class="uni-button btn" size="mini" type="primary"
+								@click="handleEdit(notice)">修改</button>
+							<button class="uni-button btn" size="mini" type="warn"
+								@click="handleDelete(notice)">删除</button>
 						</view>
 					</uni-col>
 				</uni-row>
 			</template>
 		</uni-card>
-		<uni-fab ref="fab" v-if="isAdmin" horizontal="right" vertical="bottom" @fabClick="handleAddNotice" />
+		<uni-fab ref="fab" v-if="hasLogin&&uniIDHasRole('admin')" horizontal="right" vertical="bottom"
+			@fabClick="handleAddNotice" />
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<view class="form-header">
@@ -39,7 +42,7 @@
 
 <script>
 	import {
-		mapState
+		mapGetters
 	} from 'vuex'
 	export default {
 		data() {
@@ -54,21 +57,15 @@
 			}
 		},
 		computed: {
-			...mapState({
-				role: state => state.user.info.role||[]
-			}),
-			isAdmin(){
-				if(this.role.indexOf('admin')!==-1){
-					return true
-				}
-				return false
-			}
+			...mapGetters({
+				hasLogin: 'user/hasLogin'
+			})
 		},
 		onLoad(params) {
 			this.matchInfo = params
 			this.getNotice()
 		},
-		async onPullDownRefresh(){
+		async onPullDownRefresh() {
 			await this.getNotice()
 			uni.stopPullDownRefresh()
 		},
@@ -176,6 +173,8 @@
 		.form-container {
 			background: #ffffff;
 			padding: 10px 20px 100px 20px;
+			overflow-y: auto;
+			height: 80vh;
 
 			.form-header {
 				display: flex;
@@ -185,12 +184,15 @@
 			}
 		}
 	}
-	.text{
+
+	.text {
 		white-space: pre-wrap;
 	}
+
 	.btn-container {
 		text-align: right;
-		.btn{
+
+		.btn {
 			margin-left: 4px;
 		}
 	}

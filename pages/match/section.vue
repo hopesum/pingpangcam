@@ -1,5 +1,35 @@
 <template>
 	<view class="divContainer">
+
+		<view class="divContent">
+			<view class="step">
+				<uni-segmented-control :current="current" :values="items" style-type="button" active-color="#1aad19"
+					@clickItem="onClickItem" />
+			</view>
+			<view class="header">
+				<view class="user" v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
+					<view class="step">
+						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
+							active-color="#1aad19" @clickItem="onClickLevel($event,user)" />
+					</view>
+					<view class="user-content" @click="handleUserContent(user)">
+						<view class="user-score">
+							<text :class="index%2===0?'left':'right'">{{user.score||0}}</text>
+						</view>
+					</view>
+					<view
+						:class="['user-header',(showBall==='left'&&index===0)?'left-ball':'',(showBall==='right'&&index===1)?'right-ball':'']"
+						@click="handleUserHeader(user)">
+						<image class="image" :src="user.avatar" mode="aspectFill" />
+						<text class="text">{{user.nickname}}</text>
+						<text :class="[index%2===0?'left':'right','text-section']">{{user.win||0}}</text>
+						<uni-icons
+							:class="['left-ball-empty',(showBall==='left'&&index===0)?'left-ball-o':'',(showBall==='right'&&index===1)?'right-ball-o':'']"
+							type="smallcircle-filled" size="20"></uni-icons>
+					</view>
+				</view>
+			</view>
+		</view>
 		<uni-card class="card-container" title="积分规则">
 			<view>1.所有参赛选手底分{{matchBaseInfo.matchBaseScore}}；</view>
 			<view>2.同级别选手之间胜者{{rules.sameRuleWin}}分，负者{{rules.sameRuleFail}}分；</view>
@@ -15,39 +45,6 @@
 				<uni-icons type="compose" size="20" color="#999"></uni-icons>
 			</view>
 		</uni-card>
-		<view class="divContent">
-			<view class="step">
-				<uni-segmented-control :current="current" :values="items" style-type="button" active-color="#1aad19"
-					@clickItem="onClickItem" />
-			</view>
-			<view class="header">
-				<view class="user" v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
-					<view class="step">
-						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
-							active-color="#1aad19" @clickItem="onClickLevel($event,user)" />
-					</view>
-					<view class="user-content" @click="handleUserContent(user)">
-						<view>
-							得分：
-							<text :class="index%2===0?'left':'right'">{{user.score||0}}</text>
-						</view>
-						<view>
-							胜场：
-							<text :class="index%2===0?'left':'right'">{{user.win||0}}</text>
-						</view>
-					</view>
-					<view
-						:class="['user-header',(showBall==='left'&&index===0)?'left-ball':'',(showBall==='right'&&index===1)?'right-ball':'']"
-						@click="handleUserHeader(user)">
-						<image class="image" :src="user.avatar" mode="aspectFill" />
-						<text class="text">{{user.nickname}}</text>
-						<uni-icons
-							:class="['left-ball-empty',(showBall==='left'&&index===0)?'left-ball-o':'',(showBall==='right'&&index===1)?'right-ball-o':'']"
-							type="smallcircle-filled" size="20"></uni-icons>
-					</view>
-				</view>
-			</view>
-		</view>
 		<uni-popup ref="dialog" type="dialog">
 			<uni-popup-dialog :duration="2000" @confirm="confirm">
 				<view class="popup-win">
@@ -64,7 +61,7 @@
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<uni-forms :modelValue="rules">
-				<!-- 	<uni-forms-item required label="底分" name="baseIntegral">
+					<!-- 	<uni-forms-item required label="底分" name="baseIntegral">
 						<uni-easyinput type="number" v-model="rules.baseIntegral" />
 					</uni-forms-item> -->
 					<uni-forms-item required label="同级胜" name="sameRuleWin">
@@ -102,12 +99,16 @@
 			</uni-popup-dialog>
 		</uni-popup>
 		<view v-if="setctionId" class="divFooter">
-			<button class="uni-button" type="primary" @click="handleResubmit">订正积分</button>
+			<button class="uni-button cus-btn" plain type="primary" @click="handleBoard">排行榜</button>
+			<button class="uni-button cus-btn" type="primary" @click="handleResubmit">订正积分</button>
 		</view>
 	</view>
 </template>
 
 <script>
+	import {
+		mapGetters
+	} from 'vuex'
 	export default {
 		data() {
 			return {
@@ -159,6 +160,10 @@
 			}
 		},
 		computed: {
+			...mapGetters({
+				hasLogin: 'user/hasLogin',
+				userInfo: 'user/info'
+			}),
 			maxSection() {
 				return this.current + 2
 			}
@@ -170,6 +175,11 @@
 			})
 		},
 		methods: {
+			handleBoard() {
+				uni.navigateTo({
+					url: `/pages/match/board?matchId=${this.matchBaseInfo.matchId}&matchName=${this.matchBaseInfo.matchName}`
+				})
+			},
 			handleEditRule() {
 				this.$refs.popup.open()
 			},
@@ -244,6 +254,8 @@
 				}
 				// integral
 				const postData = {
+					createTime: new Date(),
+					createUser: this.userInfo._id,
 					matchId: this.matchBaseInfo.matchId,
 					matchBaseScore: this.matchBaseInfo.matchBaseScore,
 					winner: {
@@ -257,10 +269,13 @@
 				}
 				if (this.setctionId) {
 					uniCloud.callFunction({
-						name:'section',
+						name: 'section',
 						data: {
 							action: 'updateSection',
-							params: {...postData,_id:this.setctionId}
+							params: {
+								...postData,
+								_id: this.setctionId
+							}
 						},
 						success(res) {
 							console.log(res);
@@ -275,7 +290,10 @@
 						name: 'section',
 						data: {
 							action: 'addSection',
-							params: postData
+							params: {
+								...postData,
+								createUserName: this.userInfo.nickname
+							}
 						},
 						success(res) {
 							that.setctionId = res.result.id
@@ -317,17 +335,6 @@
 			}
 		}
 
-		.rule-box {
-			padding: 4px;
-			background-color: #f5f5f5;
-			box-sizing: border-box;
-			border-radius: 4px;
-
-			.indent-text {
-				transform: scale(0.9);
-				white-space: nowrap;
-			}
-		}
 
 		.divFooter {
 			box-sizing: border-box;
@@ -335,11 +342,18 @@
 			bottom: 0;
 			width: 100%;
 			padding: 10px;
+			display: flex;
+
+			.cus-btn {
+				font-size: 14px;
+				flex: 1;
+				margin: 4px;
+			}
 		}
 
 		.divContent {
 			padding: 10px 20px;
-			margin-bottom: 60px;
+			// margin-bottom: 60px;
 
 			.step {
 				margin: 4px;
@@ -361,6 +375,12 @@
 						align-items: center;
 						justify-content: center;
 						position: relative;
+					}
+
+					.user-score {
+						display: flex;
+						justify-content: center;
+						align-items: center;
 					}
 
 					.user-content {
@@ -419,19 +439,28 @@
 
 	.left {
 		color: #409EFF;
+		font-size: 30px;
 	}
 
 	.right {
+		font-size: 30px;
 		color: #F56C6C;
 	}
 
+	.text-section {
+		font-size: 14px;
+		position: absolute;
+		top: 4px;
+		left: 8px;
+	}
+
 	.left-ball {
-		border: 2px solid #409EFF;
+		// border: 2px solid #409EFF;
 		box-sizing: border-box;
 	}
 
 	.right-ball {
-		border: 2px solid #F56C6C;
+		// border: 2px solid #F56C6C;
 		box-sizing: border-box;
 	}
 
@@ -448,5 +477,17 @@
 
 	.right-ball-o {
 		display: block;
+	}
+
+	.rule-box {
+		padding: 4px;
+		background-color: #f5f5f5;
+		box-sizing: border-box;
+		border-radius: 4px;
+
+		.indent-text {
+			transform: scale(0.8);
+			white-space: nowrap;
+		}
 	}
 </style>

@@ -1,9 +1,11 @@
 <template>
 	<view class="divContainer">
 		<view :class="['tip-btn',isCanSign?'can-sign':'cant-sign']" @click="handleSign">
+			<text>{{dateFormat(time,true)}}</text>
 			<text>{{dateFormat(time)}}</text>
 			<text>{{isCanSign?'打卡':'无法打卡'}}</text>
 		</view>
+
 		<view v-if="!isCanSign" class="err-content">
 			latitude: {{latitude}},
 			longitude: {{longitude}},
@@ -13,15 +15,17 @@
 			currentAddress: {{currentAddress}},
 		</view>
 		<view class="divFooter">
+			<view class="distance">{{distance}}</view>
 			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">打卡记录</button>
-			<button v-if="isAdmin" class="uni-button cus-btn" plain type="primary" @click="handleRule">规则设置</button>
+			<button v-if="hasLogin&&uniIDHasRole('admin')" class="uni-button cus-btn" plain type="primary"
+				@click="handleRule">规则设置</button>
 		</view>
 	</view>
 </template>
 
 <script>
 	import {
-		mapState
+		mapGetters
 	} from 'vuex'
 
 	export default {
@@ -37,25 +41,22 @@
 				currentLatitude: '',
 				currentLongitude: '',
 				currentAddress: '',
+				distance: 0,
 			}
 		},
 		computed: {
-			...mapState({
-				role: state => state.user.info.role || []
+			...mapGetters({
+				hasLogin: 'user/hasLogin',
+				userInfo: 'user/info'
 			}),
-			isAdmin() {
-				if (this.role.indexOf('admin') !== -1) {
-					return true
-				}
-				return false
-			},
 			isCanSign() {
 				let x = this.latitude - this.currentLatitude
 				let y = this.longitude - this.currentLongitude
 				let d = Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2)))
 				console.log(d, '******');
+				this.distance = d
 				// 0.001  100m
-				if (d <= 0.02) {
+				if (d <= 0.0075 && d > 0 && this.hasLogin) {
 					return true
 				}
 				return false
@@ -124,8 +125,10 @@
 				let that = this
 				uni.getLocation({
 					type: 'wgs84',
+					isHighAccuracy: true, //高精度定位
 					geocode: true, //设置该参数为true可直接获取经纬度及城市信息
 					success: function(res) {
+						console.log('res', res);
 						that.currentLatitude = res.latitude
 						that.currentLongitude = res.longitude
 						console.log('that.currentLatitude  x', that.currentLatitude);
@@ -222,11 +225,12 @@
 						data: {
 							action: 'addSignRecord',
 							params: {
-								userId: this.$store.state.user.info._id,
-								userName: this.$store.state.user.info.nickname,
+								userId: this.userInfo_id,
+								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
-								longitude: this.currentLongitude
+								longitude: this.currentLongitude,
+								distance: this.distance
 							}
 						},
 						success() {
@@ -244,11 +248,12 @@
 							action: 'updateSignRecord',
 							params: {
 								_id: that.lastSign._id,
-								userId: this.$store.state.user.info._id,
-								userName: this.$store.state.user.info.nickname,
+								userId: this.userInfo_id,
+								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
-								longitude: this.currentLongitude
+								longitude: this.currentLongitude,
+								distance: this.distance
 							}
 						},
 						success() {
@@ -325,14 +330,25 @@
 		display: flex;
 
 		.cus-btn {
+			font-size: 14px;
 			flex: 1;
 			margin: 4px;
 		}
 	}
-	.err-content{
+
+	.err-content {
 		position: fixed;
 		top: 0;
 		font-size: 12px;
 		color: #E6A23C;
+	}
+
+	.distance {
+		position: absolute;
+		top: -20px;
+		width: 100%;
+		text-align: center;
+		font-size: 12px;
+		color: #e64340;
 	}
 </style>

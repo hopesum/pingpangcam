@@ -15,6 +15,9 @@ exports.main = async (event, context) => {
 		case 'getSectionList':
 		res = await collection.where({matchId: params.matchId}).orderBy('createTime', 'desc').get()
 		break
+		case 'getAllSectionList':
+		res = await collection.orderBy('createTime', 'desc').get()
+		break
 		case 'deleteSection':
 		res = await collection.doc(params._id).remove()
 		break

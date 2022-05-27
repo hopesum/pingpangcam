@@ -2,7 +2,8 @@
 	<view class="center">
 		<uni-sign-in ref="signIn"></uni-sign-in>
 		<view class="userInfo" @click.capture="toUserInfo">
-			<cloud-image width="150rpx" height="150rpx" v-if="userInfo.avatar_file&&userInfo.avatar_file.url" :src="userInfo.avatar_file.url"></cloud-image>
+			<cloud-image width="150rpx" height="150rpx" v-if="userInfo.avatar_file&&userInfo.avatar_file.url"
+				:src="userInfo.avatar_file.url"></cloud-image>
 			<image v-else class="logo-img" src="@/static/uni-center/defaultAvatarUrl.png"></image>
 			<view class="logo-title">
 				<text class="uer-name" v-if="hasLogin">{{userInfo.nickname||userInfo.username||userInfo.mobile}}</text>
@@ -16,9 +17,9 @@
 			</uni-grid-item>
 		</uni-grid> -->
 		<uni-list class="center-list" v-for="(sublist , index) in ucenterList" :key="index">
-			<uni-list-item v-for="(item,i) in sublist" :title="item.title" link :rightText="item.rightText" :key="i"
-				:clickable="true" :to="item.to" @click="ucenterListClick(item)" :show-extra-icon="true"
-				:extraIcon="{type:item.icon,color:'#999'}">
+			<uni-list-item v-for="(item,i) in sublist" v-if="needAdmin(item)" :title="item.title" link
+				:rightText="item.rightText" :key="i" :clickable="true" :to="item.to" @click="ucenterListClick(item)"
+				:show-extra-icon="true" :extraIcon="{type:item.icon,color:'#999'}">
 				<template v-slot:footer>
 					<view v-if="item.showBadge" class="item-footer">
 						<text class="item-footer-text">{{item.rightText}}</text>
@@ -44,9 +45,11 @@
 	const db = uniCloud.database();
 	export default {
 		// #ifdef APP
-		onBackPress({from}) {
-			if(from=='backbutton'){
-				this.$nextTick(function(){
+		onBackPress({
+			from
+		}) {
+			if (from == 'backbutton') {
+				this.$nextTick(function() {
 					uniShare.hide()
 				})
 				return uniShare.isShow;
@@ -99,14 +102,20 @@
 						// 	"icon": "flag"
 						// },
 						{
+							"title": '用户管理',
+							"to": '',
+							"event": 'getPerson',
+							"icon": "person"
+						},
+						{
 							"title": '签到积分',
 							"to": '',
 							"event": 'getScore',
 							"icon": "paperplane"
 						},
 						{
-							"title":'对战记录',
-							"to": '/pages/record/record',
+							"title": '对战记录',
+							"to": '/pages/section/section',
 							"icon": "flag"
 						},
 						// // #ifdef APP-PLUS
@@ -118,16 +127,17 @@
 						// // #endif
 					],
 					[
-					// 	{
-					// 	"title": this.$t('mine.feedback'),
-					// 	"to": '/uni_modules/uni-feedback/pages/opendb-feedback/opendb-feedback',
-					// 	"icon": "help"
-					// },
-					{
-						"title": this.$t('mine.settings'),
-						"to": '/pages/ucenter/settings/settings',
-						"icon": "gear"
-					}],
+						// 	{
+						// 	"title": this.$t('mine.feedback'),
+						// 	"to": '/uni_modules/uni-feedback/pages/opendb-feedback/opendb-feedback',
+						// 	"icon": "help"
+						// },
+						{
+							"title": this.$t('mine.settings'),
+							"to": '/pages/ucenter/settings/settings',
+							"icon": "gear"
+						}
+					],
 					// [{
 					// 	"title": this.$t('mine.about'),
 					// 	"to": '/pages/ucenter/about/about',
@@ -150,7 +160,7 @@
 			// console.log(313,this.userInfo,this.hasLogin);
 			//#ifdef APP-PLUS
 			this.ucenterList[this.ucenterList.length - 2].unshift({
-				title:this.$t('mine.checkUpdate'),// this.this.$t('mine.checkUpdate')"检查更新"
+				title: this.$t('mine.checkUpdate'), // this.this.$t('mine.checkUpdate')"检查更新"
 				rightText: this.appVersion.version + '-' + this.appVersion.versionCode,
 				event: 'checkVersion',
 				icon: 'loop',
@@ -178,6 +188,22 @@
 			...mapMutations({
 				setUserInfo: 'user/login'
 			}),
+			needAdmin(item) {
+				const needAdminList = ['用户管理']
+				if(needAdminList.indexOf(item.title)!==-1){
+					if(this.hasLogin&&this.uniIDHasRole('admin')){
+						return true
+					}else{
+						return false
+					}
+				}
+				return true
+			},
+			getPerson() {
+				uni.navigateTo({
+					url:'/pages/user/user'
+				})
+			},
 			toSettings() {
 				uni.navigateTo({
 					url: "/pages/ucenter/settings/settings"
@@ -186,7 +212,7 @@
 			signIn() { //普通签到
 				this.$refs.signIn.open()
 			},
-			signInByAd(){ //看激励视频广告签到
+			signInByAd() { //看激励视频广告签到
 				this.$refs.signIn.showRewardedVideoAd()
 			},
 			/**
@@ -217,7 +243,7 @@
 			tapGrid(index) {
 				uni.showToast({
 					// title: '你点击了，第' + (index + 1) + '个',
-					title: this.$t('mine.clicked') + " " + (index + 1) ,
+					title: this.$t('mine.clicked') + " " + (index + 1),
 					icon: 'none'
 				});
 			},
@@ -262,12 +288,12 @@
 						console.log(res);
 						const data = res.result.data[0];
 						let msg = '';
-						msg = data ? (this.$t('mine.currentScore')+ data.balance) : this.$t('mine.noScore');
+						msg = data ? (this.$t('mine.currentScore') + data.balance) : this.$t('mine.noScore');
 						uni.showToast({
 							title: msg,
 							icon: 'none'
 						});
-					}).finally(()=>{
+					}).finally(() => {
 						uni.hideLoading()
 					})
 			},
@@ -362,6 +388,7 @@
 	page {
 		background-color: #f8f8f8;
 	}
+
 	/* #endif*/
 
 	.center {

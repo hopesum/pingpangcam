@@ -9,13 +9,14 @@
 				</view>
 			</view>
 			<template v-slot:actions>
-				<view v-if="isAdmin" class="btn-container">
+				<view v-if="hasLogin&&uniIDHasRole('admin')" class="btn-container">
 					<button class="uni-button btn" size="mini" type="primary" @click.stop="editMatch(match)">编辑</button>
 					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteMatch(match)">删除</button>
 				</view>
 			</template>
 		</uni-card>
-		<uni-fab v-if="isAdmin" ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
+		<uni-fab v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom"
+			@fabClick="fabClick" />
 		<uni-popup ref="popup" type="bottom">
 			<view class="form-container">
 				<view class="form-header">
@@ -47,15 +48,14 @@
 
 <script>
 	import {
-		mapState
-	} from 'vuex'
-
+		mapGetters
+	} from 'vuex';
 	export default {
 		data() {
 			return {
 				matchList: [],
 				formData: {
-					baseScore:0,
+					baseScore: 0,
 					name: '',
 					desc: '',
 					createTime: new Date()
@@ -64,15 +64,9 @@
 			}
 		},
 		computed: {
-			...mapState({
-				role: state => state.user.info.role||[]
-			}),
-			isAdmin(){
-				if(this.role.indexOf('admin')!==-1){
-					return true
-				}
-				return false
-			}
+			...mapGetters({
+				hasLogin: 'user/hasLogin'
+			})
 		},
 		onLoad() {
 			this.getMatchList()
@@ -150,7 +144,7 @@
 			},
 			fabClick() {
 				this.formData = {
-					baseScore:0,
+					baseScore: 0,
 					name: '',
 					desc: '',
 					createTime: new Date()
@@ -214,6 +208,8 @@
 	.form-container {
 		background: #ffffff;
 		padding: 10px 20px 100px 20px;
+		overflow-y: auto;
+		height: 80vh;
 
 		.form-header {
 			display: flex;

@@ -4,14 +4,15 @@
 			:title="dateFormat(item.createTime)">
 			<view>经度：{{item.latitude}}</view>
 			<view>纬度：{{item.longitude}}</view>
+			<view>距离：{{item.distance}}</view>
 		</uni-card>
-		<uni-fab v-if="isAdmin" ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
+		<uni-fab  v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
 	</view>
 </template>
 
 <script>
 	import {
-		mapState
+		mapGetters
 	} from 'vuex'
 
 	export default {
@@ -21,15 +22,9 @@
 			}
 		},
 		computed: {
-			...mapState({
-				role: state => state.user.info.role || []
-			}),
-			isAdmin() {
-				if (this.role.indexOf('admin') !== -1) {
-					return true
-				}
-				return false
-			}
+			...mapGetters({
+				hasLogin: 'user/hasLogin'
+			})
 		},
 		onLoad() {
 			this.getSignRecord()
