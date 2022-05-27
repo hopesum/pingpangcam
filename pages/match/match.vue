@@ -39,7 +39,7 @@
 			@click="handleMatchDetail(match)">
 			<view class="title">
 				<view class="name">
-					<text>{{match.desc}}</text>
+					<text class="desc">{{match.desc}}</text>
 				</view>
 			</view>
 			<template v-slot:actions>
@@ -423,5 +423,8 @@
 		.swiper-item{
 			background: #ffffff;
 		}
+	}
+	.desc{
+		color: #cccccc;
 	}
 </style>
