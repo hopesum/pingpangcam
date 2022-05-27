@@ -65,7 +65,7 @@
 						<uni-easyinput type="text" v-model="formData.baseScore" />
 					</uni-forms-item>
 					<uni-forms-item required label="描述" name="desc">
-						<uni-easyinput type="text" v-model="formData.desc" />
+						<uni-easyinput type="textarea" v-model="formData.desc" />
 					</uni-forms-item>
 				</uni-forms>
 			</view>

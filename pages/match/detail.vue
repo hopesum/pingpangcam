@@ -137,6 +137,7 @@
 			padding: 10px;
 			display: flex;
 			background: #ffffff;
+			z-index: 10;
 			.cus-btn {
 				font-size: 14px;
 				flex: 1;

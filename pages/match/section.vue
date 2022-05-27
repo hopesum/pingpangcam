@@ -318,11 +318,13 @@
 		font-size: 12px;
 		line-height: 24px;
 		position: relative;
-		padding-bottom: 10px;
+		padding-bottom: 40px;
 
 		.form-container {
 			background: #ffffff;
 			padding: 20px 40px;
+			overflow-y: auto;
+			height: 80vh;
 		}
 
 		.card-container {
@@ -343,6 +345,7 @@
 			width: 100%;
 			padding: 10px;
 			display: flex;
+			background-color: #ffffff;
 
 			.cus-btn {
 				font-size: 14px;
