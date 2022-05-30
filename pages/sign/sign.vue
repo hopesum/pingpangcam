@@ -56,7 +56,7 @@
 				console.log(d, '******');
 				this.distance = d
 				// 0.001  100m
-				if (d <= 0.0075 && d > 0 && this.hasLogin) {
+				if (d <= 0.006 && d > 0 && this.hasLogin) {
 					return true
 				}
 				return false
@@ -124,7 +124,7 @@
 			async getLocation() {
 				let that = this
 				uni.getLocation({
-					type: 'wgs84',
+					type: 'gcj02',
 					isHighAccuracy: true, //高精度定位
 					geocode: true, //设置该参数为true可直接获取经纬度及城市信息
 					success: function(res) {
@@ -139,6 +139,8 @@
 							title: '获取地址失败，将导致部分功能不可用',
 							icon: 'none'
 						});
+						that.currentLatitude = 0
+						that.currentLongitude = 0
 					}
 				});
 			},

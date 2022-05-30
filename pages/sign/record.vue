@@ -6,7 +6,7 @@
 			<view>纬度：{{item.longitude}}</view>
 			<view>距离：{{item.distance}}</view>
 		</uni-card>
-		<uni-fab  v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
+		<uni-fab  ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
 	</view>
 </template>
 

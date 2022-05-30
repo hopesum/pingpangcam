@@ -15,11 +15,11 @@
 							</view>
 							<view v-if="index===0" class="user-info">
 								<text class="title">积分王</text>
-								<view class="text">{{item.integral}}</view>
+								<view class="text">{{Number(item.integral)+Number(matchList[0].baseScore)}}</view>
 							</view>
 							<view v-if="index===1" class="user-info">
 								<text class="title">胜率王</text>
-								<view class="text">{{item.rate}}</view>
+								<view class="text">{{item.rate+'%'}}</view>
 							</view>
 							<view v-if="index===2" class="user-info">
 								<text class="title">KD王</text>
@@ -213,7 +213,7 @@
 							return b.rate - a.rate
 						})[0]
 						let KDFirst = tempList.sort((a, b) => {
-							return b.KD - a.rate
+							return b.KD - a.KD
 						})[0]
 						that.bannerList = [integralFirst, rateFirst, KDFirst]
 						console.log(that.bannerList);

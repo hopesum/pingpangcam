@@ -1,13 +1,12 @@
 <template>
 	<view class="divContainer">
-
 		<view class="divContent">
 			<view class="step">
 				<uni-segmented-control :current="current" :values="items" style-type="button" active-color="#1aad19"
 					@clickItem="onClickItem" />
 			</view>
 			<view class="header">
-				<view class="user" v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
+				<view :class="['user',index==0?'user-left':'user-right']" v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
 					<view class="step">
 						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
 							active-color="#1aad19" @clickItem="onClickLevel($event,user)" />
@@ -15,6 +14,7 @@
 					<view class="user-content" @click="handleUserContent(user)">
 						<view class="user-score">
 							<text :class="index%2===0?'left':'right'">{{user.score||0}}</text>
+							<text :class="[index%2===0?'left':'right','text-section']">{{user.win||0}}</text>
 						</view>
 					</view>
 					<view
@@ -22,10 +22,9 @@
 						@click="handleUserHeader(user)">
 						<image class="image" :src="user.avatar" mode="aspectFill" />
 						<text class="text">{{user.nickname}}</text>
-						<text :class="[index%2===0?'left':'right','text-section']">{{user.win||0}}</text>
-						<uni-icons
+						<view
 							:class="['left-ball-empty',(showBall==='left'&&index===0)?'left-ball-o':'',(showBall==='right'&&index===1)?'right-ball-o':'']"
-							type="smallcircle-filled" size="20"></uni-icons>
+							type="smallcircle-filled" size="20"></view>
 					</view>
 				</view>
 			</view>
@@ -123,11 +122,11 @@
 				rules: {
 					// baseIntegral: 500,
 					sameRuleWin: 100,
-					sameRuleFail: 20,
-					unSameRuleLowLevelWin: 120,
-					unSameRuleLowLevelFail: 20,
+					sameRuleFail: -20,
+					unSameRuleLowLevelWin: 200,
+					unSameRuleLowLevelFail: -20,
 					unSameRuleHighLevelWin: 100,
-					unSameRuleHighLevelFail: -20,
+					unSameRuleHighLevelFail: -80,
 				}
 			}
 		},
@@ -136,22 +135,44 @@
 				handler(val) {
 					let sectionNum = 0
 					let sectionScore = 0
+					let userScoreMinus = 0
+					let usera, userb
 					this?.matchBaseInfo?.battleUser?.forEach(user => {
 						sectionNum += user.win || 0
 						sectionScore += user.score || 0
 					})
-					console.log(sectionScore);
-					if (sectionNum % 2 === 0) { //左侧选手先手发球
-						if (sectionScore % 4 === 0 || (sectionScore - 1) % 4 === 0) {
-							this.showBall = 'left'
+					if (this?.matchBaseInfo?.battleUser?.length) {
+						usera = this?.matchBaseInfo?.battleUser[0]
+						userb = this?.matchBaseInfo?.battleUser[1]
+						userScoreMinus = Math.abs(Number(usera.score) - Number(userb.score))
+					}
+					if (usera?.score >= 10 && userb?.score >= 10) {
+						if (sectionNum % 2 === 0) { //左侧选手先手发球
+							if(sectionScore % 2 === 0 ){
+								this.showBall = 'left'
+							}else{
+								this.showBall = 'right'
+							}
 						} else {
-							this.showBall = 'right'
+							if (sectionScore % 2 === 0) {
+								this.showBall = 'right'
+							} else {
+								this.showBall = 'left'
+							}
 						}
 					} else {
-						if (sectionScore % 4 === 0 || (sectionScore - 1) % 4 === 0) {
-							this.showBall = 'right'
+						if (sectionNum % 2 === 0) { //左侧选手先手发球
+							if (sectionScore % 4 === 0 || (sectionScore - 1) % 4 === 0) {
+								this.showBall = 'left'
+							} else {
+								this.showBall = 'right'
+							}
 						} else {
-							this.showBall = 'left'
+							if (sectionScore % 4 === 0 || (sectionScore - 1) % 4 === 0) {
+								this.showBall = 'right'
+							} else {
+								this.showBall = 'left'
+							}
 						}
 					}
 				},
@@ -217,15 +238,29 @@
 				if (user.win >= this.maxSection) {
 					return
 				}
-				if (user.score == 11) {
-					user.win++
-					user.score = 0
+				if (user.score >= 11) {
 					const loser = this.matchBaseInfo.battleUser.find(el => el.userId !== user.userId)
-					console.log(loser);
-					loser.score = 0
-					if (user.win >= this.maxSection) {
-						this.handleWin(user)
+
+					if (loser.score < 10) {
+						user.win++
+						user.score = 0
+						loser.score = 0
+						if (user.win >= this.maxSection) {
+							this.handleWin(user)
+						}
+					} else {
+						if (Math.abs(Number(loser.score) - Number(user.score)) < 2) {
+							user.score++
+						} else {
+							user.win++
+							user.score = 0
+							loser.score = 0
+							if (user.win >= this.maxSection) {
+								this.handleWin(user)
+							}
+						}
 					}
+
 				} else {
 					user.score++
 				}
@@ -240,11 +275,11 @@
 					return el.userId !== this.winner.userId
 				})
 				if (this.winner.level <= loser.level) { //同级别或者是第一级别胜利
-					this.winner.integral = 100
-					loser.integral = 20
+					this.winner.integral = this.rules.sameRuleWin
+					loser.integral = this.rules.sameRuleFail
 				} else {
-					this.winner.integral = 120
-					loser.integral = -20
+					this.winner.integral = this.rules.unSameRuleLowLevelWin
+					loser.integral = this.rules.unSameRuleHighLevelFail
 				}
 				if (!loser.win) {
 					loser.win = 0
@@ -355,7 +390,7 @@
 		}
 
 		.divContent {
-			padding: 10px 20px;
+			padding: 20px;
 			// margin-bottom: 60px;
 
 			.step {
@@ -365,38 +400,41 @@
 			.header {
 				display: flex;
 				justify-content: space-between;
-
+				margin: 20px 0;
 				.user {
 					flex: 1;
 					text-align: center;
 					box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.08);
-					margin: 4px;
-
+					margin:20px 4px;
+					border-radius: 4px;
 					.user-header {
 						display: flex;
 						flex-direction: column;
 						align-items: center;
 						justify-content: center;
 						position: relative;
+						padding: 50px 0;
 					}
 
 					.user-score {
 						display: flex;
 						justify-content: center;
 						align-items: center;
+						font-size: 40px;
 					}
 
 					.user-content {
 						background: #f5f5f5;
 						font-size: 20px;
-						padding: 20px 0;
+						padding: 40px 0;
 						line-height: 40px;
+						position: relative;
 					}
 				}
 
 				.image {
-					width: 60px;
-					height: 60px;
+					width: 90px;
+					height: 90px;
 				}
 
 				.text {
@@ -442,19 +480,17 @@
 
 	.left {
 		color: #409EFF;
-		font-size: 30px;
 	}
 
 	.right {
-		font-size: 30px;
 		color: #F56C6C;
 	}
 
 	.text-section {
-		font-size: 14px;
+		font-size: 20px;
 		position: absolute;
-		top: 4px;
-		left: 8px;
+		top: 0;
+		left: 4px;
 	}
 
 	.left-ball {
@@ -472,6 +508,11 @@
 		position: absolute;
 		right: 5px;
 		top: 5px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: radial-gradient(transparent,#E6A23C);
+		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
 	}
 
 	.left-ball-o {
@@ -492,5 +533,11 @@
 			transform: scale(0.8);
 			white-space: nowrap;
 		}
+	}
+	.user-left{
+		border: 1px solid #409EFF;
+	}
+	.user-right{
+		border: 1px solid #F56C6C;
 	}
 </style>

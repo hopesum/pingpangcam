@@ -1,6 +1,7 @@
 <template>
 	<view class="divContainer">
-		<uni-notice-bar @getmore="getMore" showGetMore showIcon :speed="5" scrollable :text="notice.content">111111</uni-notice-bar>
+		<uni-notice-bar @getmore="getMore" showGetMore showIcon :speed="20" scrollable :text="notice.content">
+		</uni-notice-bar>
 		<view>
 			<uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="button"
 				activeColor="#409EFF"></uni-segmented-control>
@@ -8,6 +9,10 @@
 				<view v-show="current === 0">
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
+						<view id="box">
+							<qiun-data-charts type="2d" :opts="opts" id="charts" type="radar" :chartData="chartData(user)" background="none"
+								:resshow="true" />
+						</view>
 						<uni-row>
 							<uni-col :span="8">
 								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
@@ -29,7 +34,7 @@
 								<view class="item">胜率：{{user.rate}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral}}</view>
+								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
 							</uni-col>
 							<uni-col :span="8">
 								<view class="item">KD：{{user.KD}}</view>
@@ -48,7 +53,7 @@
 								<view class="item">胜率：{{user.rate}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral}}</view>
+								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
 							</uni-col>
 						</uni-row>
 					</uni-card>
@@ -68,7 +73,31 @@
 				matchInfo: {},
 				sectionList: [],
 				users: {},
-				matchBaseScore:0
+				matchBaseScore: 0,
+				opts: {
+					color: ["#1890FF", "#91CB74", "#FAC858", "#EE6666", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
+						"#ea7ccc"
+					],
+					padding: [5, 5, 5, 5],
+					dataLabel: true,
+					// dataPointShape: false,
+					legend: {
+						show: false,
+						position: "right",
+						lineHeight: 25
+					},
+					extra: {
+						radar: {
+							gridType: "circle",
+							gridColor: "#CCCCCC",
+							gridCount: 3,
+							opacity: 1,
+							max: 100,
+							linearType: "custom",
+							border: false
+						}
+					}
+				}
 			}
 		},
 		computed: {
@@ -88,7 +117,8 @@
 						winMatch: user.winMatch,
 						failMatch: user.failMatch,
 						win: user.win,
-						fail: user.fail
+						fail: user.fail,
+						fight: user.fight
 					}
 				})
 				switch (this.current) {
@@ -128,12 +158,31 @@
 			this.getSectionList()
 			this.getNotice()
 		},
-		async onPullDownRefresh(){
+		async onPullDownRefresh() {
 			await this.getSectionList()
 			await this.getNotice()
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			chartData(user) {
+				let fight = user.fight
+				let categories = Object.keys(fight)
+				let data = categories.map(userId => {
+					let userData = user.fight[userId]
+					return Math.ceil(((Number(userData.win || 0) / (Number(userData.win || 0) + Number(userData.fail ||
+						0)) || 0) * 100))
+				})
+				let res = {
+					categories: categories.map(userId => {
+						return user.fight[userId].nickname
+					}),
+					series: [{
+						name: "对战",
+						data: data
+					}]
+				}
+				return JSON.parse(JSON.stringify(res))
+			},
 			onClickItem(e) {
 				if (this.current != e.currentIndex) {
 					this.current = e.currentIndex;
@@ -145,16 +194,16 @@
 					name: 'notice',
 					data: {
 						action: 'getNoticeList',
-						params:this.matchInfo
+						params: this.matchInfo
 					},
 					success(res) {
 						that.notice = res.result.data[0]
 					}
 				})
 			},
-			getMore(){
+			getMore() {
 				uni.navigateTo({
-					url:'/pages/notice/notice?matchId=' + this.matchInfo.matchId
+					url: '/pages/notice/notice?matchId=' + this.matchInfo.matchId
 				})
 			},
 			async getSectionList() {
@@ -163,11 +212,10 @@
 					name: 'section',
 					data: {
 						action: 'getSectionList',
-						params:this.matchInfo
+						params: this.matchInfo
 					},
 					success(res) {
 						that.sectionList = res.result.data
-						console.log(res.result.data);
 						that.matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
 						let winnerList = that.sectionList.map(el => el.winner)
 						let loserList = that.sectionList.map(el => el.loser)
@@ -213,8 +261,48 @@
 								}
 							}
 						})
+
+						Object.keys(users).forEach((userId) => {
+							let fight = {};
+							res.result.data.forEach((el) => {
+								if (el.winner.userId === userId) {
+									if (fight[el.loser.userId]) {
+										if (fight[el.loser.userId].win) {
+											fight[el.loser.userId].win += 1;
+										} else {
+											fight[el.loser.userId].win = 1;
+										}
+									} else {
+										fight[el.loser.userId] = {
+											userId: el.loser.userId,
+											nickname: el.loser.nickname,
+											avatar: el.loser.avatar,
+											win: 1,
+										};
+									}
+								}
+								if (el.loser.userId === userId) {
+									if (fight[el.winner.userId]) {
+										if (fight[el.winner.userId].fail) {
+											fight[el.winner.userId].fail += 1;
+										} else {
+											fight[el.winner.userId].fail = 1;
+										}
+									} else {
+										fight[el.winner.userId] = {
+											userId: el.winner.userId,
+											nickname: el.winner.nickname,
+											avatar: el.winner.avatar,
+											fail: 1,
+										};
+									}
+								}
+							});
+							users[userId].fight = fight
+						});
 						that.users = users
 						that.$set(that, 'users', users)
+						console.log(that.users, '*******');
 					}
 				})
 			}
@@ -229,10 +317,11 @@
 		.item {
 			text-align: center;
 		}
+
 		.form-container {
 			background: #ffffff;
 			padding: 10px 20px 100px 20px;
-		
+
 			.form-header {
 				display: flex;
 				justify-content: space-between;
@@ -241,4 +330,5 @@
 			}
 		}
 	}
+
 </style>

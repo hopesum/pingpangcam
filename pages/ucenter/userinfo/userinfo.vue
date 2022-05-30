@@ -12,8 +12,8 @@
 			</uni-list-item>
 			<uni-list-item class="item" @click="setNickname('')" :title="$t('userinfo.nickname')" :rightText="userInfo.nickname||$t('userinfo.notSet')" link>
 			</uni-list-item>
-			<uni-list-item class="item" @click="bindMobile" :title="$t('userinfo.phoneNumber')" :rightText="userInfo.mobile||$t('userinfo.notSpecified')" link>
-			</uni-list-item>
+			<!-- <uni-list-item class="item" @click="bindMobile" :title="$t('userinfo.phoneNumber')" :rightText="userInfo.mobile||$t('userinfo.notSpecified')" link>
+			</uni-list-item> -->
 		</uni-list>
 		<uni-popup ref="dialog" type="dialog">
 			<uni-popup-dialog mode="input" :value="userInfo.nickname" @confirm="setNickname" :title="$t('userinfo.setNickname')"
