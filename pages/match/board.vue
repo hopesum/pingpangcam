@@ -9,9 +9,15 @@
 				<view v-show="current === 0">
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
-						<view id="box">
-							<qiun-data-charts type="2d" :opts="opts" id="charts" type="radar" :chartData="chartData(user)" background="none"
-								:resshow="true" />
+						<view class="chart-container">
+							<view class="box">
+								<qiun-data-charts :opts="opts" id="charts" type="radar" :chartData="chartData(user)"
+									background="none" :resshow="true" />
+							</view>
+							<!-- <view class="box">
+								<qiun-data-charts :opts="opts" id="charts" type="radar"
+									:chartData="chartData(user,true)" background="none" :resshow="true" />
+							</view> -->
 						</view>
 						<uni-row>
 							<uni-col :span="8">
@@ -78,23 +84,45 @@
 					color: ["#1890FF", "#91CB74", "#FAC858", "#EE6666", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
 						"#ea7ccc"
 					],
-					padding: [5, 5, 5, 5],
-					dataLabel: true,
+					xAxis: {
+						boundaryGap: "justify",
+						disableGrid: false,
+						min: 0,
+						axisLine: false,
+						max: 200
+					},
+					padding: [0, 0, 0, 0],
+					dataLabel: {
+						show: true,
+						color: ["#1890FF", "#91CB74", "#FAC858", "#EE6666", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
+							"#ea7ccc"
+						],
+					},
 					// dataPointShape: false,
 					legend: {
-						show: false,
-						position: "right",
-						lineHeight: 25
+						show: true,
+						position: "bottom",
+						// lineHeight: 20
 					},
 					extra: {
+						bar: {
+							type: "stack",
+							width: 30,
+							meterBorde: 1,
+							meterFillColor: "#FFFFFF",
+							activeBgColor: "#000000",
+							activeBgOpacity: 0.08,
+							categoryGap: 2
+						},
 						radar: {
 							gridType: "circle",
 							gridColor: "#CCCCCC",
 							gridCount: 3,
-							opacity: 1,
+							opacity: 0.2,
 							max: 100,
 							linearType: "custom",
-							border: false
+							border: true,
+							gridEval: 2,
 						}
 					}
 				}
@@ -164,22 +192,42 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
-			chartData(user) {
+			chartData(user, flag = false) {
 				let fight = user.fight
 				let categories = Object.keys(fight)
 				let data = categories.map(userId => {
 					let userData = user.fight[userId]
-					return Math.ceil(((Number(userData.win || 0) / (Number(userData.win || 0) + Number(userData.fail ||
+					return Math.round(((Number(userData.win || 0) / (Number(userData.win || 0) + Number(userData
+						.fail ||
 						0)) || 0) * 100))
+				})
+				let data2 = categories.map(userId => {
+					let userData = user.fight[userId]
+					return Math.round(((Number(userData.winMatchNum || 0) / (Number(userData.winMatchNum || 0) +
+						Number(userData
+							.failMatchNum ||
+							0)) || 0) * 100))
 				})
 				let res = {
 					categories: categories.map(userId => {
 						return user.fight[userId].nickname
 					}),
 					series: [{
-						name: "对战",
+						name: "取胜概率",
 						data: data
 					}]
+				}
+				let res2 = {
+					categories: categories.map(userId => {
+						return user.fight[userId].nickname
+					}),
+					series: [{
+						name: "实际胜率",
+						data: data2
+					}]
+				}
+				if (flag) {
+					return JSON.parse(JSON.stringify(res2))
 				}
 				return JSON.parse(JSON.stringify(res))
 			},
@@ -262,38 +310,84 @@
 							}
 						})
 
+						// Object.keys(users).forEach((userId) => {
+						// 	let fight = {};
+						// 	res.result.data.forEach((el) => {
+						// 		if (el.winner.userId === userId) {
+						// 			if (fight[el.loser.userId]) {
+						// 				if (fight[el.loser.userId].win) {
+						// 					fight[el.loser.userId].win += 1;
+						// 				} else {
+						// 					fight[el.loser.userId].win = 1;
+						// 				}
+						// 			} else {
+						// 				fight[el.loser.userId] = {
+						// 					userId: el.loser.userId,
+						// 					nickname: el.loser.nickname,
+						// 					avatar: el.loser.avatar,
+						// 					win: 1,
+						// 				};
+						// 			}
+						// 		}
+						// 		if (el.loser.userId === userId) {
+						// 			if (fight[el.winner.userId]) {
+						// 				if (fight[el.winner.userId].fail) {
+						// 					fight[el.winner.userId].fail += 1;
+						// 				} else {
+						// 					fight[el.winner.userId].fail = 1;
+						// 				}
+						// 			} else {
+						// 				fight[el.winner.userId] = {
+						// 					userId: el.winner.userId,
+						// 					nickname: el.winner.nickname,
+						// 					avatar: el.winner.avatar,
+						// 					fail: 1,
+						// 				};
+						// 			}
+						// 		}
+						// 	});
+						// 	users[userId].fight = fight
+						// });
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {
-								if (el.winner.userId === userId) {
-									if (fight[el.loser.userId]) {
-										if (fight[el.loser.userId].win) {
-											fight[el.loser.userId].win += 1;
+								if (el.winner.userId === userId) { //如果是胜者
+									if (fight[el.loser.userId]) { //之前计算过胜利
+										fight[el.loser.userId].win += el.winner.win * 1
+										fight[el.loser.userId].fail += el.winner.fail * 1
+										if (fight[el.loser.userId].winMatchNum) {
+											fight[el.loser.userId].winMatchNum += 1;
 										} else {
-											fight[el.loser.userId].win = 1;
+											fight[el.loser.userId].winMatchNum = 1;
 										}
-									} else {
+									} else { //没有计算过胜利
 										fight[el.loser.userId] = {
 											userId: el.loser.userId,
 											nickname: el.loser.nickname,
 											avatar: el.loser.avatar,
-											win: 1,
+											win: el.winner.win * 1,
+											fail: el.winner.fail * 1,
+											winMatchNum: 1,
 										};
 									}
 								}
 								if (el.loser.userId === userId) {
 									if (fight[el.winner.userId]) {
-										if (fight[el.winner.userId].fail) {
-											fight[el.winner.userId].fail += 1;
+										fight[el.winner.userId].win += el.loser.win * 1
+										fight[el.winner.userId].fail += el.loser.fail * 1
+										if (fight[el.winner.userId].failMatchNum) {
+											fight[el.winner.userId].failMatchNum += 1;
 										} else {
-											fight[el.winner.userId].fail = 1;
+											fight[el.winner.userId].failMatchNum = 1;
 										}
 									} else {
 										fight[el.winner.userId] = {
 											userId: el.winner.userId,
 											nickname: el.winner.nickname,
 											avatar: el.winner.avatar,
-											fail: 1,
+											fail: el.loser.fail * 1,
+											win: el.loser.win * 1,
+											failMatchNum: 1
 										};
 									}
 								}
