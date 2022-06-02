@@ -5,7 +5,7 @@
 			<view class="battle-user">
 				<view class="left">
 					<view class="name">
-						{{item.winner.nickname}}
+						{{item.winner.nickname+(item.winner.realname?item.winner.realname:'')}}
 					</view>
 					<view class="section">
 						胜局：{{item.winner.win}}
@@ -20,7 +20,7 @@
 				</view>
 				<view class="right">
 					<view class="name">
-						{{item.loser.nickname}}
+						{{item.loser.nickname+(item.loser.realname?item.loser.realname:'')}}
 					</view>
 					<view class="section">
 						胜局：{{item.loser.win}}

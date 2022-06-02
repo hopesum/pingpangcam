@@ -1,6 +1,6 @@
 <template>
 	<view class="divContainer">
-		<uni-notice-bar @getmore="getMore" showGetMore showIcon :speed="20" scrollable :text="notice.content">
+		<uni-notice-bar @click="getMore" scrollable showIcon :speed="30" :text="notice.content">
 		</uni-notice-bar>
 		<view>
 			<uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="button"
@@ -10,14 +10,13 @@
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
 						<view class="chart-container">
+							<view class="chart-switch">
+								<switch @change="switchChange($event,user)" style="transform:scale(0.7)">展示实际胜率</switch>
+							</view>
 							<view class="box">
 								<qiun-data-charts :opts="opts" id="charts" type="radar" :chartData="chartData(user)"
 									background="none" :resshow="true" />
 							</view>
-							<!-- <view class="box">
-								<qiun-data-charts :opts="opts" id="charts" type="radar"
-									:chartData="chartData(user,true)" background="none" :resshow="true" />
-							</view> -->
 						</view>
 						<uni-row>
 							<uni-col :span="8">
@@ -81,7 +80,7 @@
 				users: {},
 				matchBaseScore: 0,
 				opts: {
-					color: ["#1890FF", "#91CB74", "#FAC858", "#EE6666", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
+					color: ["#1890FF", "#EE6666", "#FAC858", "#91CB74", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
 						"#ea7ccc"
 					],
 					xAxis: {
@@ -94,7 +93,7 @@
 					padding: [0, 0, 0, 0],
 					dataLabel: {
 						show: true,
-						color: ["#1890FF", "#91CB74", "#FAC858", "#EE6666", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
+						color: ["#1890FF", "#EE6666", "#FAC858", "#91CB74", "#73C0DE", "#3CA272", "#FC8452", "#9A60B4",
 							"#ea7ccc"
 						],
 					},
@@ -134,6 +133,7 @@
 					return []
 				}
 				let tempList = Object.keys(this.users).map(key => this.users[key])
+				tempList.splice(tempList.findIndex(el => el.nickname === '补分选手'), 1)
 				tempList = tempList.map(user => {
 					return {
 						avatar: user.avatar,
@@ -192,7 +192,11 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
-			chartData(user, flag = false) {
+			switchChange(e, user) {
+				this.$set(user, 'showRealRate', e.detail.value)
+				this.$forceUpdate()
+			},
+			chartData(user) {
 				let fight = user.fight
 				let categories = Object.keys(fight)
 				let data = categories.map(userId => {
@@ -213,21 +217,16 @@
 						return user.fight[userId].nickname
 					}),
 					series: [{
-						name: "取胜概率",
+						name: "期望胜率",
 						data: data
 					}]
 				}
 				let res2 = {
-					categories: categories.map(userId => {
-						return user.fight[userId].nickname
-					}),
-					series: [{
-						name: "实际胜率",
-						data: data2
-					}]
+					name: "实际胜率",
+					data: data2
 				}
-				if (flag) {
-					return JSON.parse(JSON.stringify(res2))
+				if (user.showRealRate) {
+					res.series.push(res2)
 				}
 				return JSON.parse(JSON.stringify(res))
 			},
@@ -266,13 +265,15 @@
 						that.sectionList = res.result.data
 						that.matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
 						let winnerList = that.sectionList.map(el => el.winner)
+						console.log(winnerList, 'winnerList****');
 						let loserList = that.sectionList.map(el => el.loser)
+						console.log(loserList, 'loserList****');
 						let users = {}
-
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
-								users[el.userId].winMatch += 1
-								users[el.userId].win += el.win
+								users[el.userId].winMatch += el.tag == '补分' ? 0 : 1
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
 								users[el.userId].integral += el.integral
 							} else {
 								users[el.userId] = {
@@ -283,16 +284,17 @@
 									score: el.score,
 									winMatch: 1,
 									failMatch: 0,
-									win: el.win,
-									fail: el.fail,
+									win: el.tag == '补分' ? 0 : el.win,
+									fail: el.tag == '补分' ? 0 : el.fail,
 									integral: el.integral
 								}
 							}
 						})
 						loserList.forEach(el => {
 							if (users[el.userId]) {
-								users[el.userId].failMatch += 1
-								users[el.userId].fail += el.fail
+								users[el.userId].failMatch += el.tag == '补分' ? 0 : 1
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
 								users[el.userId].integral += el.integral
 							} else {
 								users[el.userId] = {
@@ -303,8 +305,8 @@
 									score: el.score,
 									winMatch: 0,
 									failMatch: 1,
-									win: el.win,
-									fail: el.fail,
+									win: el.tag == '补分' ? 0 : el.win,
+									fail: el.tag == '补分' ? 0 : el.fail,
 									integral: el.integral
 								}
 							}
@@ -351,44 +353,47 @@
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {
-								if (el.winner.userId === userId) { //如果是胜者
-									if (fight[el.loser.userId]) { //之前计算过胜利
-										fight[el.loser.userId].win += el.winner.win * 1
-										fight[el.loser.userId].fail += el.winner.fail * 1
-										if (fight[el.loser.userId].winMatchNum) {
-											fight[el.loser.userId].winMatchNum += 1;
-										} else {
-											fight[el.loser.userId].winMatchNum = 1;
+								if (el.winner.nickname !== '补分选手' && el.loser.nickname !==
+									'补分选手') {
+									if (el.winner.userId === userId) { //如果是胜者
+										if (fight[el.loser.userId]) { //之前计算过胜利
+											fight[el.loser.userId].win += el.winner.win * 1
+											fight[el.loser.userId].fail += el.winner.fail * 1
+											if (fight[el.loser.userId].winMatchNum) {
+												fight[el.loser.userId].winMatchNum += 1;
+											} else {
+												fight[el.loser.userId].winMatchNum = 1;
+											}
+										} else { //没有计算过胜利
+											fight[el.loser.userId] = {
+												userId: el.loser.userId,
+												nickname: el.loser.nickname,
+												avatar: el.loser.avatar,
+												win: el.winner.win * 1,
+												fail: el.winner.fail * 1,
+												winMatchNum: 1,
+											};
 										}
-									} else { //没有计算过胜利
-										fight[el.loser.userId] = {
-											userId: el.loser.userId,
-											nickname: el.loser.nickname,
-											avatar: el.loser.avatar,
-											win: el.winner.win * 1,
-											fail: el.winner.fail * 1,
-											winMatchNum: 1,
-										};
 									}
-								}
-								if (el.loser.userId === userId) {
-									if (fight[el.winner.userId]) {
-										fight[el.winner.userId].win += el.loser.win * 1
-										fight[el.winner.userId].fail += el.loser.fail * 1
-										if (fight[el.winner.userId].failMatchNum) {
-											fight[el.winner.userId].failMatchNum += 1;
+									if (el.loser.userId === userId) {
+										if (fight[el.winner.userId]) {
+											fight[el.winner.userId].win += el.loser.win * 1
+											fight[el.winner.userId].fail += el.loser.fail * 1
+											if (fight[el.winner.userId].failMatchNum) {
+												fight[el.winner.userId].failMatchNum += 1;
+											} else {
+												fight[el.winner.userId].failMatchNum = 1;
+											}
 										} else {
-											fight[el.winner.userId].failMatchNum = 1;
+											fight[el.winner.userId] = {
+												userId: el.winner.userId,
+												nickname: el.winner.nickname,
+												avatar: el.winner.avatar,
+												fail: el.loser.fail * 1,
+												win: el.loser.win * 1,
+												failMatchNum: 1
+											};
 										}
-									} else {
-										fight[el.winner.userId] = {
-											userId: el.winner.userId,
-											nickname: el.winner.nickname,
-											avatar: el.winner.avatar,
-											fail: el.loser.fail * 1,
-											win: el.loser.win * 1,
-											failMatchNum: 1
-										};
 									}
 								}
 							});
@@ -425,4 +430,7 @@
 		}
 	}
 
+	.chart-switch {
+		float: right;
+	}
 </style>

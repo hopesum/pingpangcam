@@ -6,7 +6,8 @@
 					@clickItem="onClickItem" />
 			</view>
 			<view class="header">
-				<view :class="['user',index==0?'user-left':'user-right']" v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
+				<view :class="['user',index==0?'user-left':'user-right']"
+					v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
 					<view class="step">
 						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
 							active-color="#1aad19" @clickItem="onClickLevel($event,user)" />
@@ -21,7 +22,11 @@
 						:class="['user-header',(showBall==='left'&&index===0)?'left-ball':'',(showBall==='right'&&index===1)?'right-ball':'']"
 						@click="handleUserHeader(user)">
 						<image class="image" :src="user.avatar" mode="aspectFill" />
-						<text class="text">{{user.nickname}}</text>
+						<view class="user-name">
+							<text class="text">{{user.nickname}}</text>
+							<input v-if="user.nickname==='补分选手'" type="text" v-model="user.realname"
+								placeholder="真名" style="width: 50px;font-size: 12px;border: 1px #eee solid;margin-top: 4px;" />
+						</view>
 						<view
 							:class="['left-ball-empty',(showBall==='left'&&index===0)?'left-ball-o':'',(showBall==='right'&&index===1)?'right-ball-o':'']"
 							type="smallcircle-filled" size="20"></view>
@@ -49,7 +54,7 @@
 				<view class="popup-win">
 					<view class="winner-container">
 						<image lazy-load class="image" :src="winner.avatar" mode="aspectFill" />
-						<text class="text">{{winner.nickname}}</text>
+						<text class="text">{{winner.nickname+(winner.realname?winner.realname:'')}}</text>
 					</view>
 					<view class="desc">
 						恭喜获胜，是否上传积分数据
@@ -148,9 +153,9 @@
 					}
 					if (usera?.score >= 10 && userb?.score >= 10) {
 						if (sectionNum % 2 === 0) { //左侧选手先手发球
-							if(sectionScore % 2 === 0 ){
+							if (sectionScore % 2 === 0) {
 								this.showBall = 'left'
-							}else{
+							} else {
 								this.showBall = 'right'
 							}
 						} else {
@@ -303,6 +308,18 @@
 					}
 				}
 				if (this.setctionId) {
+					if (this.winner.nickname === '补分选手' || loser.nickname === '补分选手') {
+						Object.assign(postData, {
+							winner: {
+								...this.winner,
+								tag: '补分'
+							},
+							loser: {
+								...loser,
+								tag: '补分'
+							}
+						})
+					}
 					uniCloud.callFunction({
 						name: 'section',
 						data: {
@@ -321,6 +338,18 @@
 						}
 					})
 				} else {
+					if (this.winner.nickname === '补分选手' || loser.nickname === '补分选手') {
+						Object.assign(postData, {
+							winner: {
+								...this.winner,
+								tag: '补分'
+							},
+							loser: {
+								...loser,
+								tag: '补分'
+							}
+						})
+					}
 					uniCloud.callFunction({
 						name: 'section',
 						data: {
@@ -401,12 +430,14 @@
 				display: flex;
 				justify-content: space-between;
 				margin: 20px 0;
+
 				.user {
 					flex: 1;
 					text-align: center;
 					box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.08);
-					margin:20px 4px;
+					margin: 20px 4px;
 					border-radius: 4px;
+
 					.user-header {
 						display: flex;
 						flex-direction: column;
@@ -511,7 +542,7 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 50%;
-		background: radial-gradient(transparent,#E6A23C);
+		background: radial-gradient(transparent, #E6A23C);
 		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
 	}
 
@@ -534,10 +565,18 @@
 			white-space: nowrap;
 		}
 	}
-	.user-left{
+
+	.user-left {
 		border: 1px solid #409EFF;
 	}
-	.user-right{
+
+	.user-right {
 		border: 1px solid #F56C6C;
+	}
+	.user-name{
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		white-space: nowrap;
 	}
 </style>

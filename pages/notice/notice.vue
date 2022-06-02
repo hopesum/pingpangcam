@@ -25,7 +25,7 @@
 				</view>
 				<uni-forms :modelValue="formData">
 					<uni-forms-item required label="内容" name="content">
-						<uni-easyinput :maxlength="-1" type="textarea" v-model="formData.content" />
+						<uni-easyinput :maxlength="-1" autoHeight type="textarea" v-model="formData.content" />
 					</uni-forms-item>
 				</uni-forms>
 			</view>
