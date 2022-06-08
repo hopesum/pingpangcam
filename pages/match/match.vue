@@ -1,28 +1,29 @@
 <template>
 	<view class="divContainer">
 		<swiper v-if="matchList.length&&bannerList.length" class="swiper" circular :indicator-dots="true"
-			:autoplay="true" :interval="2000" :duration="500">
-			<swiper-item class="swiper-item" v-for="(item,index) in bannerList" :key="index">
-				<view class="user-container">
+			:autoplay="true" :interval="4000" :duration="500">
+			<swiper-item class="swiper-item" v-for="(item,index) in bannerList" :key="index" @click="handleBanner">
+				<view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view>
+				<view :class="['user-container']">
 					<view class="user-left">
 						<image class="banner-img" :src="item.avatar" mode="aspectFill" :draggable="false"></image>
 					</view>
 					<view class="user-right">
 						<view>
 							<view class="user-title">
-								<uni-icons type="medal-filled" size="48" color="gold"></uni-icons>
+								<!-- <uni-icons type="medal-filled" size="48" color="gold"></uni-icons> -->
 								<text class="title-name">{{item.nickname}}</text>
 							</view>
 							<view v-if="index===0" class="user-info">
-								<text class="title">积分王</text>
+								<uni-tag class="tag" text="积分 NO.1" type="success"></uni-tag>
 								<view class="text">{{Number(item.integral)+Number(matchList[0].baseScore)}}</view>
 							</view>
 							<view v-if="index===1" class="user-info">
-								<text class="title">胜率王</text>
+								<uni-tag class="tag" text="胜率 NO.1" type="error"></uni-tag>
 								<view class="text">{{item.rate+'%'}}</view>
 							</view>
 							<view v-if="index===2" class="user-info">
-								<text class="title">KD王</text>
+								<uni-tag class="tag" text="KD NO.1" type="warning"></uni-tag>
 								<view class="text">{{item.KD}}</view>
 							</view>
 						</view>
@@ -51,29 +52,51 @@
 		</uni-card>
 		<uni-fab v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom"
 			@fabClick="fabClick" />
-		<uni-popup ref="popup" type="bottom">
+		<uni-popup ref="popup" type="bottom" background-color="#fff">
 			<view class="form-container">
 				<view class="form-header">
 					<uni-icons type="closeempty" color="#409EFF" size="30" @click="handleClose"></uni-icons>
 					<uni-icons type="checkmarkempty" color="#67C23A" size="30" @click="handleAdd"></uni-icons>
 				</view>
-				<uni-forms :modelValue="formData">
-					<uni-forms-item required label="名称" name="name">
-						<uni-easyinput type="text" v-model="formData.name" />
-					</uni-forms-item>
-					<uni-forms-item required label="底分" name="baseScore">
-						<uni-easyinput type="text" v-model="formData.baseScore" />
-					</uni-forms-item>
-					<uni-forms-item required label="描述" name="desc">
-						<uni-easyinput type="textarea" v-model="formData.desc" />
-					</uni-forms-item>
-					<uni-forms-item required label="图片" name="image">
-							<cloud-image @click="uploadAvatarImg" v-if="formData.image" :src="formData.image" width="60px" height="40px"></cloud-image>
+				<scroll-view scroll-y="true" class="scroll-Y">
+					<uni-forms :modelValue="formData">
+						<uni-forms-item required label="名称" name="name">
+							<uni-easyinput type="text" v-model="formData.name" />
+						</uni-forms-item>
+						<uni-forms-item required label="描述" name="desc">
+							<uni-easyinput type="textarea" v-model="formData.desc" />
+						</uni-forms-item>
+						<uni-forms-item required label="图片" name="image">
+							<cloud-image @click="uploadAvatarImg" v-if="formData.image" :src="formData.image"
+								width="60px" height="40px"></cloud-image>
 							<view v-else class="chooseAvatar">
-								<uni-icons @click="uploadAvatarImg" type="plusempty" size="30" color="#dddddd"></uni-icons>
+								<uni-icons @click="uploadAvatarImg" type="plusempty" size="30" color="#dddddd">
+								</uni-icons>
 							</view>
-					</uni-forms-item>
-				</uni-forms>
+						</uni-forms-item>
+						<uni-forms-item required label="底分" name="baseScore">
+							<uni-easyinput type="text" v-model="formData.baseScore" />
+						</uni-forms-item>
+						<uni-forms-item required label="同级胜">
+							<uni-easyinput type="number" v-model="formData.rules.sameRuleWin" />
+						</uni-forms-item>
+						<uni-forms-item required label="同级败">
+							<uni-easyinput type="number" v-model="formData.rules.sameRuleFail" />
+						</uni-forms-item>
+						<uni-forms-item required label="一级胜">
+							<uni-easyinput type="number" v-model="formData.rules.unSameRuleHighLevelWin" />
+						</uni-forms-item>
+						<uni-forms-item required label="一级败">
+							<uni-easyinput type="number" v-model="formData.rules.unSameRuleHighLevelFail" />
+						</uni-forms-item>
+						<uni-forms-item required label="二级胜">
+							<uni-easyinput type="number" v-model="formData.rules.unSameRuleLowLevelWin" />
+						</uni-forms-item>
+						<uni-forms-item required label="二级败">
+							<uni-easyinput type="number" v-model="formData.rules.unSameRuleLowLevelFail" />
+						</uni-forms-item>
+					</uni-forms>
+				</scroll-view>
 			</view>
 		</uni-popup>
 		<uni-popup ref="dialog" type="dialog">
@@ -93,14 +116,24 @@
 	export default {
 		data() {
 			return {
+				rainNum: 20,
 				matchList: [],
 				bannerList: [],
 				formData: {
 					baseScore: 0,
 					name: '',
 					desc: '',
-					image:'',
-					createTime: new Date()
+					image: '',
+					createTime: new Date(),
+					rules: {
+						// baseIntegral: 500,
+						sameRuleWin: 100,
+						sameRuleFail: -20,
+						unSameRuleLowLevelWin: 200,
+						unSameRuleLowLevelFail: -20,
+						unSameRuleHighLevelWin: 100,
+						unSameRuleHighLevelFail: -80,
+					}
 				},
 				deleteMatchInfo: {}
 			}
@@ -118,6 +151,19 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			rain(index) {
+				return {
+					left: (Math.random() * 750) + 'px',
+					animationDelay: Math.random() * -5 + 's',
+					animationDuration: 1 + Math.random() * 5 + 's',
+					background: `linear-gradient(transparent, rgb(${255*Math.random()},${255*Math.random()},${255*Math.random()}))`
+				}
+			},
+			handleBanner() {
+				uni.navigateTo({
+					url: `/pages/match/board?matchId=${this.matchList[0]._id}&matchName=${this.matchList[0].name}`
+				})
+			},
 			uploadAvatarImg(res) {
 				const crop = {
 					quality: 100,
@@ -148,9 +194,9 @@
 							});
 						})
 						// #endif
-						let cloudPath ='updateTime' + Date.now()
+						let cloudPath = 'updateTime' + Date.now()
 						uni.showLoading({
-							title:'上传中',
+							title: '上传中',
 							mask: true
 						});
 						let {
@@ -386,8 +432,17 @@
 					baseScore: 0,
 					name: '',
 					desc: '',
-					image:'',
-					createTime: new Date()
+					image: '',
+					createTime: new Date(),
+					rules: {
+						// baseIntegral: 500,
+						sameRuleWin: 100,
+						sameRuleFail: -20,
+						unSameRuleLowLevelWin: 200,
+						unSameRuleLowLevelFail: -20,
+						unSameRuleHighLevelWin: 100,
+						unSameRuleHighLevelFail: -80,
+					}
 				}
 				this.$refs.popup.open()
 			},
@@ -401,7 +456,7 @@
 			},
 			handleMatchDetail(match) {
 				uni.navigateTo({
-					url: `/pages/match/detail?matchId=${match._id}&matchName=${match.name}&matchBaseScore=${match.baseScore}`
+					url: `/pages/match/detail?matchBaseInfo=${encodeURIComponent(JSON.stringify(match))}`
 				})
 			}
 		}
@@ -409,6 +464,35 @@
 </script>
 
 <style lang="scss" scoped>
+	@keyframes bannerImageScale {
+
+		0%,
+		100% {
+			transform: scale(1);
+		}
+
+		50% {
+			transform: scale(0.98);
+		}
+	}
+
+	@keyframes textShake {
+		25% {
+			transform: translateX(-4px) rotate(-5deg);
+		}
+
+		50%,
+		0%,
+		100% {
+			transform: translateX(0px) rotate(0deg);
+		}
+
+		75% {
+			transform: translateX(4px) rotate(5deg);
+		}
+
+	}
+
 	.divContainer {
 		font-size: 16px;
 		background: #f5f5f5;
@@ -448,8 +532,6 @@
 
 	.form-container {
 		background: #ffffff;
-		padding: 10px 20px 100px 20px;
-		overflow-y: auto;
 		height: 80vh;
 
 		.form-header {
@@ -457,6 +539,14 @@
 			justify-content: space-between;
 			background: #ffffff;
 			padding: 10px;
+			position: sticky;
+			top: 0;
+		}
+
+		.scroll-Y {
+			height: 100%;
+			padding: 10px 20px 40px;
+			box-sizing: border-box;
 		}
 	}
 
@@ -471,6 +561,7 @@
 	.user-container {
 		display: flex;
 		height: 100%;
+		// background: linear-gradient(145deg,  #41d8DD, #F5CCF6);
 
 		.user-left {
 			flex: 1;
@@ -482,21 +573,25 @@
 			.banner-img {
 				width: 100%;
 				height: 100%;
-				border: 2px solid #ffd700;
+				// border: 2px solid #ffd700;
 				box-sizing: border-box;
 				margin: 8px;
+				box-shadow: 2px 2px 6px #aaaaaa;
+				border-radius: 4px;
+				// animation: bannerImageScale 4s infinite;
 			}
 		}
 
 		.user-right {
 			flex: 1;
 			height: 100%;
-			padding: 10px;
+			padding: 40px 10px 10px;
 			box-sizing: border-box;
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
-			// align-items: center;
+			position: relative;
+			// align-items: center;			
 		}
 	}
 
@@ -507,7 +602,11 @@
 	}
 
 	.title-name {
-		color: #ffd700;
+		// color: #ffd700;
+		animation: bannerImageScale 4s infinite;
+		color: #fff;
+		font-size: 35px;
+		text-shadow: 2px 2px 4px #aaa;
 	}
 
 	.user-info {
@@ -517,29 +616,41 @@
 	}
 
 	.title {
-		color: #409EFF;
+		// color: #409EFF;
+	}
+
+	.tag {
+		position: absolute;
+		top: 8px;
+		right: 8px;
 	}
 
 	.text {
-		color: #409EFF;
-		text-shadow: 2px 2px #F56C6C;
-		font-size: 30px;
-		transform: rotate(10deg);
-
+		color: #ffffff;
+		// text-shadow: 2px 2px #F56C6C;
+		font-size: 20px;
+		background: linear-gradient(145deg, #409EFF, #F56C6C);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		text-shadow: 2px 2px 2px #aaa;
+		// animation: textShake 300ms infinite ;
 	}
-	.swiper{
-		// box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-		// border: 1px solid #409EFF;
+
+	.swiper {
 		padding: 10px;
 		background: #f5f5f5;
-		// background-image: url('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg');
-		.swiper-item{
-			background: #ffffff;
+
+		.swiper-item {
+			position: relative;
+			background-color: rgba(0, 0, 0, .2);
+			// background: #ffffff;
 		}
 	}
-	.desc{
+
+	.desc {
 		color: #cccccc;
 	}
+
 	.chooseAvatar {
 		border: dotted 1px #ddd;
 		border-radius: 10px;
@@ -547,5 +658,37 @@
 		width: 60px;
 		height: 40px;
 		line-height: 40px;
+	}
+
+
+	// 雨滴特效
+	.rain {
+		position: absolute;
+		width: 5px;
+		height: 60px;
+		border-radius: 0 0 5px 5px;
+		animation: dropRain 5s linear infinite;
+	}
+
+	.rain:nth-child(3n+1) {
+		background: linear-gradient(transparent, deeppink);
+	}
+
+	.rain:nth-child(3n+2) {
+		background: linear-gradient(transparent, gold);
+	}
+
+	.rain:nth-child(3n+3) {
+		background: linear-gradient(transparent, skyblue);
+	}
+
+	@keyframes dropRain {
+		0% {
+			transform: translateY(-200px);
+		}
+
+		100% {
+			transform: translateY(300px);
+		}
 	}
 </style>

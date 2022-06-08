@@ -45,7 +45,7 @@
 					若第二级别胜，胜者积分{{rules.unSameRuleLowLevelWin}}分，负者积分{{rules.unSameRuleHighLevelFail}}分。</view>
 			</view>
 			<view>4.赛制可以双方协商采用7局4胜，5局3胜，3局2胜均可。</view>
-			<view class="card-edit" @click="handleEditRule">
+			<view class="card-edit" v-if="hasLogin&&uniIDHasRole('admin')" @click="handleEditRule">
 				<uni-icons type="compose" size="20" color="#999"></uni-icons>
 			</view>
 		</uni-card>
@@ -196,6 +196,7 @@
 		},
 		onLoad(option) {
 			this.matchBaseInfo = JSON.parse(decodeURIComponent(option.matchBaseInfo));
+			this.rules = this.matchBaseInfo.matchRules
 			this.matchBaseInfo.battleUser.forEach(user => {
 				this.$set(user, 'level', 0)
 			})

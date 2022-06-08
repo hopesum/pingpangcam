@@ -39,11 +39,12 @@
 			}
 		},
 		onLoad(params) {
-			this.matchId = params.matchId
-			this.matchName = params.matchName
-			this.matchBaseScore = params.matchBaseScore
+			this.matchBaseInfo = JSON.parse(decodeURIComponent(params.matchBaseInfo));
+			this.matchId = this.matchBaseInfo._id
+			this.matchName = this.matchBaseInfo.name
+			this.matchBaseScore = this.matchBaseInfo.baseScore
 			uni.setNavigationBarTitle({
-				title: params.matchName
+				title: this.matchBaseInfo.name
 			})
 			this.getUserList()
 		},
@@ -56,6 +57,7 @@
 				const postData = {
 					matchId: this.matchId,
 					matchBaseScore: this.matchBaseScore,
+					matchRules: this.matchBaseInfo.rules,
 					battleUser: this.battleUser.map(el => {
 						for (var i = 0; i < this.userList.length; i++) {
 							if (el === this.userList[i]._id) {
@@ -138,6 +140,7 @@
 			display: flex;
 			background: #ffffff;
 			z-index: 10;
+
 			.cus-btn {
 				font-size: 14px;
 				flex: 1;

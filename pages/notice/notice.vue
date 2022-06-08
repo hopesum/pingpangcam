@@ -17,17 +17,19 @@
 		</uni-card>
 		<uni-fab ref="fab" v-if="hasLogin&&uniIDHasRole('admin')" horizontal="right" vertical="bottom"
 			@fabClick="handleAddNotice" />
-		<uni-popup ref="popup" type="bottom">
+		<uni-popup ref="popup" type="bottom" background-color="#fff">
 			<view class="form-container">
 				<view class="form-header">
 					<uni-icons type="closeempty" color="#409EFF" size="30" @click="handleClose"></uni-icons>
 					<uni-icons type="checkmarkempty" color="#67C23A" size="30" @click="addNotice"></uni-icons>
 				</view>
+				<scroll-view scroll-y="true" class="scroll-Y">
 				<uni-forms :modelValue="formData">
 					<uni-forms-item required label="内容" name="content">
 						<uni-easyinput :maxlength="-1" autoHeight type="textarea" v-model="formData.content" />
 					</uni-forms-item>
 				</uni-forms>
+				</scroll-view>
 			</view>
 		</uni-popup>
 		<uni-popup ref="dialog" type="dialog">
@@ -172,15 +174,20 @@
 
 		.form-container {
 			background: #ffffff;
-			padding: 10px 20px 100px 20px;
-			overflow-y: auto;
 			height: 80vh;
-
+			position: relative;
+			.scroll-Y{
+				height: 100%;
+				padding: 10px 20px 40px;
+				box-sizing: border-box;
+			}
 			.form-header {
 				display: flex;
 				justify-content: space-between;
 				background: #ffffff;
 				padding: 10px;
+				position: sticky;
+				top: 0;
 			}
 		}
 	}
