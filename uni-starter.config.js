@@ -41,8 +41,8 @@ export default {
 			{"pattern":/^\/pages\/ucenter\/login-page.*/},
 			// "/pages/common/webview/webview",
 			// "/pages/grid/grid",
-			"/pages/ucenter/ucenter",
-			"/pages/ucenter/about/about",
+			// "/pages/ucenter/ucenter",
+			// "/pages/ucenter/about/about",
 			// "/pages/ucenter/settings/settings"
 		],
 		/*

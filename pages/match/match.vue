@@ -35,7 +35,7 @@
 			</swiper-item>
 		</swiper>
 		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
-			cover="https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg"
+			:cover="match.image||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
 			@click="handleMatchDetail(match)">
 			<view class="title">
 				<view class="name">
@@ -67,6 +67,12 @@
 					<uni-forms-item required label="描述" name="desc">
 						<uni-easyinput type="textarea" v-model="formData.desc" />
 					</uni-forms-item>
+					<uni-forms-item required label="图片" name="image">
+							<cloud-image @click="uploadAvatarImg" v-if="formData.image" :src="formData.image" width="60px" height="40px"></cloud-image>
+							<view v-else class="chooseAvatar">
+								<uni-icons @click="uploadAvatarImg" type="plusempty" size="30" color="#dddddd"></uni-icons>
+							</view>
+					</uni-forms-item>
 				</uni-forms>
 			</view>
 		</uni-popup>
@@ -93,6 +99,7 @@
 					baseScore: 0,
 					name: '',
 					desc: '',
+					image:'',
 					createTime: new Date()
 				},
 				deleteMatchInfo: {}
@@ -111,6 +118,57 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			uploadAvatarImg(res) {
+				const crop = {
+					quality: 100,
+					width: 600,
+					height: 400,
+					resize: true
+				};
+				uni.chooseImage({
+					count: 1,
+					crop,
+					success: async (res) => {
+						console.log(res);
+						let tempFile = res.tempFiles[0],
+							matchImage,
+							filePath = res.tempFilePaths[0]
+						// #ifndef APP-PLUS
+						//非app端用前端组件剪裁头像，app端用内置的原生裁剪
+						filePath = await new Promise((callback) => {
+							uni.navigateTo({
+								url: '/pages/ucenter/userinfo/cropImage?path=' + filePath +
+									`&options=${JSON.stringify(crop)}`,
+								animationType: "fade-in",
+								events: {
+									success: url => {
+										callback(url)
+									}
+								}
+							});
+						})
+						// #endif
+						let cloudPath ='updateTime' + Date.now()
+						uni.showLoading({
+							title:'上传中',
+							mask: true
+						});
+						let {
+							fileID
+						} = await uniCloud.uploadFile({
+							filePath,
+							cloudPath,
+							fileType: "image"
+						});
+						// console.log(result)
+						matchImage = fileID
+						this.formData.image = matchImage
+						// this.$forceUpdate()
+						uni.hideLoading()
+						// this.setAvatarFile(matchImage)
+					}
+				})
+			},
 			async getMatchList() {
 				let that = this
 				await uniCloud.callFunction({
@@ -149,8 +207,9 @@
 
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
-								users[el.userId].winMatch += 1
-								users[el.userId].win += el.win
+								users[el.userId].winMatch += el.tag == '补分' ? 0 : 1
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
 								users[el.userId].integral += el.integral
 							} else {
 								users[el.userId] = {
@@ -161,16 +220,17 @@
 									score: el.score,
 									winMatch: 1,
 									failMatch: 0,
-									win: el.win,
-									fail: el.fail,
+									win: el.tag == '补分' ? 0 : el.win,
+									fail: el.tag == '补分' ? 0 : el.fail,
 									integral: el.integral
 								}
 							}
 						})
 						loserList.forEach(el => {
 							if (users[el.userId]) {
-								users[el.userId].failMatch += 1
-								users[el.userId].fail += el.fail
+								users[el.userId].failMatch += el.tag == '补分' ? 0 : 1
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
 								users[el.userId].integral += el.integral
 							} else {
 								users[el.userId] = {
@@ -181,8 +241,8 @@
 									score: el.score,
 									winMatch: 0,
 									failMatch: 1,
-									win: el.win,
-									fail: el.fail,
+									win: el.tag == '补分' ? 0 : el.win,
+									fail: el.tag == '补分' ? 0 : el.fail,
 									integral: el.integral
 								}
 							}
@@ -190,6 +250,55 @@
 						if (!Object.keys(users).length) {
 							return []
 						}
+						Object.keys(users).forEach((userId) => {
+							let fight = {};
+							res.result.data.forEach((el) => {
+								if (el.winner.nickname !== '补分选手' && el.loser.nickname !==
+									'补分选手') {
+									if (el.winner.userId === userId) { //如果是胜者
+										if (fight[el.loser.userId]) { //之前计算过胜利
+											fight[el.loser.userId].win += el.winner.win * 1
+											fight[el.loser.userId].fail += el.winner.fail * 1
+											if (fight[el.loser.userId].winMatchNum) {
+												fight[el.loser.userId].winMatchNum += 1;
+											} else {
+												fight[el.loser.userId].winMatchNum = 1;
+											}
+										} else { //没有计算过胜利
+											fight[el.loser.userId] = {
+												userId: el.loser.userId,
+												nickname: el.loser.nickname,
+												avatar: el.loser.avatar,
+												win: el.winner.win * 1,
+												fail: el.winner.fail * 1,
+												winMatchNum: 1,
+											};
+										}
+									}
+									if (el.loser.userId === userId) {
+										if (fight[el.winner.userId]) {
+											fight[el.winner.userId].win += el.loser.win * 1
+											fight[el.winner.userId].fail += el.loser.fail * 1
+											if (fight[el.winner.userId].failMatchNum) {
+												fight[el.winner.userId].failMatchNum += 1;
+											} else {
+												fight[el.winner.userId].failMatchNum = 1;
+											}
+										} else {
+											fight[el.winner.userId] = {
+												userId: el.winner.userId,
+												nickname: el.winner.nickname,
+												avatar: el.winner.avatar,
+												fail: el.loser.fail * 1,
+												win: el.loser.win * 1,
+												failMatchNum: 1
+											};
+										}
+									}
+								}
+							});
+							users[userId].fight = fight
+						});
 						let tempList = Object.keys(users).map(key => users[key])
 						tempList = tempList.map(user => {
 							return {
@@ -277,6 +386,7 @@
 					baseScore: 0,
 					name: '',
 					desc: '',
+					image:'',
 					createTime: new Date()
 				}
 				this.$refs.popup.open()
@@ -372,6 +482,9 @@
 			.banner-img {
 				width: 100%;
 				height: 100%;
+				border: 2px solid #ffd700;
+				box-sizing: border-box;
+				margin: 8px;
 			}
 		}
 
@@ -426,5 +539,13 @@
 	}
 	.desc{
 		color: #cccccc;
+	}
+	.chooseAvatar {
+		border: dotted 1px #ddd;
+		border-radius: 10px;
+		text-align: center;
+		width: 60px;
+		height: 40px;
+		line-height: 40px;
 	}
 </style>

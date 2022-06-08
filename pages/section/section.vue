@@ -1,9 +1,20 @@
 <template>
 	<view class="divContainer">
+		<view class="filter" @click="handleFilter">
+			<text>筛选</text>
+			<view v-if="currentUser.nickname" class="filter-name" @click.stop="handleDeleteFilter">
+				<text class="filter-name-text">{{currentUser.nickname}}({{sectionList.length+'场'}})</text>
+				<uni-icons type="closeempty" size="12" color="#F56C6C"></uni-icons>
+			</view>
+		</view>
+		<view v-if="!matchId" class="board-btn" @click="handleBoard">排行榜</view>
 		<uni-card v-for="(item,index) in sectionList" :extra="item.createUserName" :key="index"
 			:title="dateFormat(item.createTime)">
 			<view class="battle-user">
 				<view class="left">
+					<view class="">
+						<image class="avatar" :src="item.winner.avatar" mode="aspectFill" :draggable="false"></image>
+					</view>
 					<view class="name">
 						{{item.winner.nickname+(item.winner.realname?item.winner.realname:'')}}
 					</view>
@@ -19,6 +30,9 @@
 					<text class="fail">S</text>
 				</view>
 				<view class="right">
+					<view class="">
+						<image class="avatar" :src="item.loser.avatar" mode="aspectFill" :draggable="false"></image>
+					</view>
 					<view class="name">
 						{{item.loser.nickname+(item.loser.realname?item.loser.realname:'')}}
 					</view>
@@ -32,7 +46,6 @@
 			</view>
 			<template v-slot:actions>
 				<view v-if="(hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser)" class="btn-container">
-					<!-- <button class="uni-button btn" size="mini" type="primary" @click.stop="editSection(item)">编辑</button> -->
 					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteSection(item)">删除</button>
 				</view>
 			</template>
@@ -44,43 +57,21 @@
 				</view>
 			</uni-popup-dialog>
 		</uni-popup>
-		<uni-popup ref="popup" type="bottom">
+		<uni-popup ref="popup" type="bottom" background-color="#fff">
 			<view class="form-container">
-				<view class="form-header">
+				<scroll-view scroll-y="true" class="scroll-Y">
+					<!-- <view class="form-header">
 					<uni-icons type="closeempty" color="#409EFF" size="30" @click="handleClose"></uni-icons>
 					<uni-icons type="checkmarkempty" color="#67C23A" size="30" @click="handleAdd"></uni-icons>
-				</view>
-				<uni-forms :modelValue="formData">
-					<view class="winner-container">
-						<uni-forms-item disabled required label="胜者">
-							<uni-easyinput type="text" v-model="formData.winner.nickname" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="胜场">
-							<uni-easyinput type="number" v-model="formData.winner.win" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="败场">
-							<uni-easyinput type="number" v-model="formData.winner.fail" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="获得积分">
-							<uni-easyinput type="number" v-model="formData.winner.integral" />
-						</uni-forms-item>
+				</view> -->
+					<view v-if="userList.length">
+						<view class="user-dialog" v-for="(user,index) in userList" :key="index"
+							@click="handleSearchUser(user)">
+							<image class="avatar" :src="user.avatar" mode="aspectFill" :draggable="false"></image>
+							<text>{{user.nickname}}</text>
+						</view>
 					</view>
-					<view class="loser-container">
-						<uni-forms-item disabled required label="败者">
-							<uni-easyinput type="text" v-model="formData.loser.nickname" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="胜场">
-							<uni-easyinput type="number" v-model="formData.loser.win" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="败场">
-							<uni-easyinput type="number" v-model="formData.loser.fail" />
-						</uni-forms-item>
-						<uni-forms-item disabled required label="获得积分">
-							<uni-easyinput type="number" v-model="formData.loser.integral" />
-						</uni-forms-item>
-					</view>
-
-				</uni-forms>
+				</scroll-view>
 			</view>
 		</uni-popup>
 	</view>
@@ -94,9 +85,11 @@
 		data() {
 			return {
 				matchId: '',
+				currentUser: {},
 				sectionList: [],
 				oprateSection: {},
-				formData: {}
+				formData: {},
+				userList: []
 			}
 		},
 		computed: {
@@ -104,6 +97,16 @@
 				hasLogin: 'user/hasLogin',
 				userInfo: 'user/info'
 			})
+			// userList() {
+			// 	let templist = []
+			// 	this.sectionList.forEach(el => {
+			// 		let templistUserIds = templist.map(el => el.userId)
+			// 		if (templistUserIds.indexOf(el.winner.userId || el.loser.userId) === -1) {
+			// 			templist.push(el.winner || el.loser)
+			// 		}
+			// 	})
+			// 	return templist
+			// }
 		},
 		onLoad(params) {
 			this.matchId = params.matchId || ''
@@ -116,26 +119,19 @@
 			this.initialize()
 		},
 		async onPullDownRefresh() {
-			await this.initialize()
+			if (this.currentUser?.nickname) {
+				await this.getList()
+			} else {
+				await this.initialize()
+			}
 			uni.stopPullDownRefresh()
 		},
 		methods: {
 			handleClose() {
 				this.$refs.popup.close()
 			},
-			async handleAdd() {
-				let that = this
-				await uniCloud.callFunction({
-					name: 'section',
-					data: {
-						action: 'updateSection',
-						params: that.formData
-					},
-					success() {
-						that.$refs.popup.close()
-						that.initialize()
-					}
-				})
+			handleAdd() {
+
 			},
 			dateFormat(time, flag) {
 				let date = new Date(time);
@@ -186,6 +182,12 @@
 						},
 						success(res) {
 							that.sectionList = res.result.data
+							res.result.data.forEach(el => {
+								let templistUserIds = that.userList.map(el => el.userId)
+								if (templistUserIds.indexOf(el.winner.userId || el.loser.userId) === -1) {
+									that.userList.push(el.winner || el.loser)
+								}
+							})
 						}
 					})
 				} else {
@@ -196,9 +198,64 @@
 						},
 						success(res) {
 							that.sectionList = res.result.data
+							res.result.data.forEach(el => {
+								let templistUserIds = that.userList.map(el => el.userId)
+								if (templistUserIds.indexOf(el.winner.userId || el.loser.userId) === -1) {
+									that.userList.push(el.winner || el.loser)
+								}
+							})
 						}
 					})
 				}
+			},
+			handleFilter() {
+				this.$refs.popup.open()
+			},
+			handleSearchUser(user) {
+				this.currentUser = user
+				this.$refs.popup.close()
+				this.getList()
+
+			},
+			handleDeleteFilter() {
+				this.currentUser = {}
+				this.initialize()
+			},
+			getList() {
+				let that = this
+				if (this.matchId) {
+					uniCloud.callFunction({
+						name: 'section',
+						data: {
+							action: 'getUserSectionList',
+							params: {
+								matchId: this.matchId,
+								userId: this.currentUser.userId
+							}
+						},
+						success(res) {
+							that.sectionList = res.result.data
+						}
+					})
+				} else {
+					uniCloud.callFunction({
+						name: 'section',
+						data: {
+							action: 'getUserAllSectionList',
+							params: {
+								userId: this.currentUser.userId
+							}
+						},
+						success(res) {
+							that.sectionList = res.result.data
+						}
+					})
+				}
+			},
+			handleBoard(){
+				uni.navigateTo({
+					url:'/pages/match/board'
+				})
 			}
 		}
 	}
@@ -208,6 +265,12 @@
 	.divContainer {
 		.battle-user {
 			display: flex;
+
+			.avatar {
+				width: 50px;
+				height: 50px;
+				border-radius: 4px;
+			}
 
 			.left {
 				flex: 1;
@@ -252,15 +315,20 @@
 
 	.form-container {
 		background: #ffffff;
-		padding: 10px;
-		overflow-y: auto;
+		padding: 0 10px;
 		height: 80vh;
+
+		.scroll-Y {
+			height: 100%;
+		}
 
 		.form-header {
 			display: flex;
 			justify-content: space-between;
 			background: #ffffff;
 			padding: 10px;
+			position: sticky;
+			top: 0;
 		}
 
 		.winner-container {
@@ -282,5 +350,70 @@
 
 	.desc {
 		font-size: 12px;
+	}
+
+	.filter {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px;
+		margin: 0 10px;
+		background: #f5f5f5;
+		color: #999999;
+		font-size: 12px;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+
+		.filter-name {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			color: #F56C6C;
+			border: 1px solid #409EFF;
+			padding: 2px 4px;
+			border-radius: 4px;
+			background: #ffffff;
+
+			.filter-name-text {
+				margin-right: 4px;
+			}
+		}
+	}
+
+	.user-dialog {
+		border: 1px solid #409EFF;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 10px;
+		margin: 8px 0;
+
+		&:nth-of-type(2n) {
+			border: 1px solid #F56C6C;
+		}
+
+		.avatar {
+			width: 50px;
+			height: 50px;
+			border-radius: 4px;
+		}
+	}
+	.board-btn{
+		position: fixed;
+		bottom: 60px;
+		right: 30px;
+		z-index: 1;
+		width: 52px;
+		height: 52px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 14px;
+		background: #007aff;
+		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+		border-radius: 50%;
+		color: #ffffff;
+		font-weight: 600;
 	}
 </style>

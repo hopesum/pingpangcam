@@ -15,6 +15,16 @@ exports.main = async (event, context) => {
 		case 'getSectionList':
 		res = await collection.where({matchId: params.matchId}).orderBy('createTime', 'desc').get()
 		break
+		case 'getUserSectionList':
+		let res1 = await collection.where({matchId: params.matchId,winner:{userId:params.userId}}).orderBy('createTime', 'desc').get()
+		let res2 = await collection.where({matchId: params.matchId,loser:{userId:params.userId}}).orderBy('createTime', 'desc').get()
+		res = {data:[...res1.data,...res2.data].sort((a,b)=>{return b.createTime-a.createTime})}
+		break
+		case 'getUserAllSectionList':
+		let res11 = await collection.where({winner:{userId:params.userId}}).orderBy('createTime', 'desc').get()
+		let res22 = await collection.where({loser:{userId:params.userId}}).orderBy('createTime', 'desc').get()
+		res = {data:[...res11.data,...res22.data].sort((a,b)=>{return b.createTime-a.createTime})}
+		break
 		case 'getAllSectionList':
 		res = await collection.orderBy('createTime', 'desc').get()
 		break

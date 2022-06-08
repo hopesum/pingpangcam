@@ -1,6 +1,7 @@
 <template>
 	<view class="divContainer">
-		<uni-notice-bar @click="getMore" scrollable showIcon :speed="30" :text="notice.content">
+		<uni-notice-bar v-if="matchInfo.matchId" @click="getMore" scrollable showIcon :speed="30"
+			:text="notice.content">
 		</uni-notice-bar>
 		<view>
 			<uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="button"
@@ -29,6 +30,17 @@
 								<view class="item">KD：{{user.KD}}</view>
 							</uni-col>
 						</uni-row>
+						<uni-row>
+							<uni-col :span="8">
+								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">胜场：{{user.winMatch || 0}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">负场：{{user.failMatch || 0}}</view>
+							</uni-col>
+						</uni-row>
 					</uni-card>
 				</view>
 				<view v-show="current === 1">
@@ -45,6 +57,17 @@
 								<view class="item">KD：{{user.KD}}</view>
 							</uni-col>
 						</uni-row>
+						<uni-row>
+							<uni-col :span="8">
+								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">胜场：{{user.winMatch || 0}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">负场：{{user.failMatch || 0}}</view>
+							</uni-col>
+						</uni-row>
 					</uni-card>
 				</view>
 				<view v-show="current === 2">
@@ -59,6 +82,17 @@
 							</uni-col>
 							<uni-col :span="8">
 								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
+							</uni-col>
+						</uni-row>
+						<uni-row>
+							<uni-col :span="8">
+								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">胜场：{{user.winMatch || 0}}</view>
+							</uni-col>
+							<uni-col :span="8">
+								<view class="item">负场：{{user.failMatch || 0}}</view>
 							</uni-col>
 						</uni-row>
 					</uni-card>
@@ -183,12 +217,25 @@
 		},
 		onLoad(params) {
 			this.matchInfo = params
+			if (this.matchInfo.matchName) {
+				uni.setNavigationBarTitle({
+					title: '赛事对战榜单'
+				})
+			}else{
+				uni.setNavigationBarTitle({
+					title: '总对战榜单'
+				})
+			}
 			this.getSectionList()
-			this.getNotice()
+			if (this.matchInfo.matchId) {
+				this.getNotice()
+			}
 		},
 		async onPullDownRefresh() {
 			await this.getSectionList()
-			await this.getNotice()
+			if (this.matchInfo.matchId) {
+				await this.getNotice()
+			}
 			uni.stopPullDownRefresh()
 		},
 		methods: {
@@ -255,19 +302,25 @@
 			},
 			async getSectionList() {
 				let that = this
-				await uniCloud.callFunction({
-					name: 'section',
-					data: {
+				let data
+				if(this.matchInfo.matchId){
+					data = {
 						action: 'getSectionList',
 						params: this.matchInfo
-					},
+					}
+				}else{
+					data = {
+						action: 'getAllSectionList'
+					}
+				}
+				await uniCloud.callFunction({
+					name: 'section',
+					data,
 					success(res) {
 						that.sectionList = res.result.data
 						that.matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
 						let winnerList = that.sectionList.map(el => el.winner)
-						console.log(winnerList, 'winnerList****');
 						let loserList = that.sectionList.map(el => el.loser)
-						console.log(loserList, 'loserList****');
 						let users = {}
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
@@ -311,45 +364,6 @@
 								}
 							}
 						})
-
-						// Object.keys(users).forEach((userId) => {
-						// 	let fight = {};
-						// 	res.result.data.forEach((el) => {
-						// 		if (el.winner.userId === userId) {
-						// 			if (fight[el.loser.userId]) {
-						// 				if (fight[el.loser.userId].win) {
-						// 					fight[el.loser.userId].win += 1;
-						// 				} else {
-						// 					fight[el.loser.userId].win = 1;
-						// 				}
-						// 			} else {
-						// 				fight[el.loser.userId] = {
-						// 					userId: el.loser.userId,
-						// 					nickname: el.loser.nickname,
-						// 					avatar: el.loser.avatar,
-						// 					win: 1,
-						// 				};
-						// 			}
-						// 		}
-						// 		if (el.loser.userId === userId) {
-						// 			if (fight[el.winner.userId]) {
-						// 				if (fight[el.winner.userId].fail) {
-						// 					fight[el.winner.userId].fail += 1;
-						// 				} else {
-						// 					fight[el.winner.userId].fail = 1;
-						// 				}
-						// 			} else {
-						// 				fight[el.winner.userId] = {
-						// 					userId: el.winner.userId,
-						// 					nickname: el.winner.nickname,
-						// 					avatar: el.winner.avatar,
-						// 					fail: 1,
-						// 				};
-						// 			}
-						// 		}
-						// 	});
-						// 	users[userId].fight = fight
-						// });
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {
@@ -414,7 +428,7 @@
 		padding: 10px;
 
 		.item {
-			text-align: center;
+			text-align: left;
 		}
 
 		.form-container {

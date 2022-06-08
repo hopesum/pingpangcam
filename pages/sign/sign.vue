@@ -222,12 +222,16 @@
 					}
 				}
 				if (oprate === 'add') {
+					let signIntegral = Math.random(0, 1)
+					const signIntegralList = [0, 1, 2, 4, 5, 10, 20, 0, 0, 0];
+					console.log(signIntegralList[Math.floor(Math.random() * (signIntegralList.length + 1))])
+
 					uniCloud.callFunction({
 						name: 'signRecord',
 						data: {
 							action: 'addSignRecord',
 							params: {
-								userId: this.userInfo_id,
+								userId: this.userInfo._id,
 								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
@@ -250,7 +254,7 @@
 							action: 'updateSignRecord',
 							params: {
 								_id: that.lastSign._id,
-								userId: this.userInfo_id,
+								userId: this.userInfo._id,
 								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
