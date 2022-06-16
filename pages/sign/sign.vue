@@ -5,21 +5,49 @@
 			<text>{{dateFormat(time)}}</text>
 			<text>{{isCanSign?'打卡':'无法打卡'}}</text>
 		</view>
-
-		<view v-if="!isCanSign" class="err-content">
+		<view class="ad">
+			{{currentAddress}}
+		</view>
+		<!-- <view v-if="!isCanSign" class="err-content">
 			latitude: {{latitude}},
 			longitude: {{longitude}},
 			address: {{address}},
 			currentLatitude: {{currentLatitude}},
 			currentLongitude: {{currentLongitude}},
 			currentAddress: {{currentAddress}},
-		</view>
+		</view> -->
 		<view class="divFooter">
 			<view class="distance">{{distance}}</view>
 			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">打卡记录</button>
+			<button class="uni-button cus-btn " type="warn" @click="handleSendAddress">位置通知</button>
 			<button v-if="hasLogin&&uniIDHasRole('admin')" class="uni-button cus-btn" plain type="primary"
 				@click="handleRule">规则设置</button>
 		</view>
+		<uni-popup ref="dialog" type="dialog">
+			<uni-popup-dialog :duration="2000" @confirm="confirm">
+				<view class="popup-win">
+					<!-- <view class="tips">加入钉钉：44663557获取通知</view> -->
+					<view class="tips">加入企业微信获取通知</view>
+					<view class="winner-container">
+						<image class="image" src="/static/images/qywx.png" mode="aspectFill" />
+					</view>
+					<uni-easyinput v-model="customMsg" placeholder="" />
+					<view class="desc">
+						打卡成功，是否通知各位？
+					</view>
+				</view>
+			</uni-popup-dialog>
+		</uni-popup>
+		<uni-popup ref="redialog" type="dialog">
+			<uni-popup-dialog :duration="2000" @confirm="confirmDistance">
+				<uni-easyinput type="number" v-model="distanceRule" placeholder="" />
+			</uni-popup-dialog>
+		</uni-popup>
+		<uni-popup ref="medialog" type="dialog">
+			<uni-popup-dialog :duration="2000">
+				<view>发送成功</view>
+			</uni-popup-dialog>
+		</uni-popup>
 	</view>
 </template>
 
@@ -27,7 +55,7 @@
 	import {
 		mapGetters
 	} from 'vuex'
-
+	var amapFile = require('./libs/amap-wx.js')
 	export default {
 		data() {
 			return {
@@ -42,6 +70,8 @@
 				currentLongitude: '',
 				currentAddress: '',
 				distance: 0,
+				customMsg: '我打卡了，赶紧来',
+				distanceRule: 0
 			}
 		},
 		computed: {
@@ -56,7 +86,7 @@
 				console.log(d, '******');
 				this.distance = d
 				// 0.001  100m
-				if (d <= 0.006 && d > 0 && this.hasLogin) {
+				if (d <= this.distanceRule && d > 0 && this.hasLogin) {
 					return true
 				}
 				return false
@@ -75,6 +105,7 @@
 			}
 		},
 		onLoad() {
+			console.log(this.hasLogin,'???')
 			this.getRules()
 			this.getLocation()
 			this.getSignRecord()
@@ -117,32 +148,55 @@
 						that.latitude = res.latitude
 						that.longitude = res.longitude
 						that.address = res.address
-						that.addRule()
+						that.$refs.redialog.open()
 					}
 				});
 			},
+			confirmDistance() {
+				console.log(this.distanceRule, 'distanceeRule');
+				this.addRule()
+			},
 			async getLocation() {
-				let that = this
-				uni.getLocation({
-					type: 'gcj02',
-					isHighAccuracy: true, //高精度定位
-					geocode: true, //设置该参数为true可直接获取经纬度及城市信息
-					success: function(res) {
-						console.log('res', res);
+				var that = this;
+				var myAmapFun = new amapFile.AMapWX({
+					key: '2cb5a0de8824b9bae96b4f25889fe053'
+				});
+				myAmapFun.getRegeo({
+					success: function(data) {
+						console.log(data, '高德获取地址');
+						let res = data[0]
 						that.currentLatitude = res.latitude
 						that.currentLongitude = res.longitude
-						console.log('that.currentLatitude  x', that.currentLatitude);
-						console.log('that.currentLongitude  y', that.currentLongitude);
+						that.currentAddress = res.regeocodeData.formatted_address
+						//成功回调
 					},
-					fail: function() {
-						uni.showToast({
-							title: '获取地址失败，将导致部分功能不可用',
-							icon: 'none'
-						});
-						that.currentLatitude = 0
-						that.currentLongitude = 0
+					fail: function(info) {
+						//失败回调
+						console.log(info)
 					}
-				});
+				})
+				// let that = this
+				// uni.getLocation({
+				// 	type: 'gcj02',
+				// 	altitude: true,
+				// 	isHighAccuracy: true, //高精度定位
+				// 	highAccuracyExpireTime: 4000,
+				// 	success: function(res) {
+				// 		console.log('res', res);
+				// 		that.currentLatitude = res.latitude
+				// 		that.currentLongitude = res.longitude
+				// 		console.log('that.currentLatitude  x', that.currentLatitude);
+				// 		console.log('that.currentLongitude  y', that.currentLongitude);
+				// 	},
+				// 	fail: function() {
+				// 		uni.showToast({
+				// 			title: '获取地址失败，将导致部分功能不可用',
+				// 			icon: 'none'
+				// 		});
+				// 		that.currentLatitude = 0
+				// 		that.currentLongitude = 0
+				// 	}
+				// });
 			},
 			async getRules() {
 				let that = this
@@ -156,9 +210,12 @@
 						that.latitude = res.result?.data[0]?.latitude
 						that.longitude = res.result?.data[0]?.longitude
 						that.address = res.result?.data[0]?.address
+						that.distanceRule = res.result?.data[0]?.distanceRule || 0
+
 						console.log(that.latitude, 'x');
 						console.log(that.longitude, 'y');
 						console.log(that.address);
+						console.log(that.distanceRule);
 					}
 				})
 			},
@@ -173,7 +230,7 @@
 								_id: that.ruleId,
 								latitude: that.latitude,
 								longitude: that.longitude,
-								address: that.address
+								distanceRule: that.distanceRule
 							}
 						},
 						success() {
@@ -205,6 +262,7 @@
 			},
 			handleSign() {
 				let that = this
+				console.log(this.userInfo);
 				if (!this.isCanSign) {
 					uni.showToast({
 						icon: 'none',
@@ -234,17 +292,19 @@
 								userId: this.userInfo._id,
 								userName: this.userInfo.nickname,
 								createTime: new Date(),
+								address: this.currentAddress,
 								latitude: this.currentLatitude,
 								longitude: this.currentLongitude,
 								distance: this.distance
 							}
 						},
 						success() {
-							uni.showToast({
-								icon: 'none',
-								title: '打卡成功'
-							})
+							// uni.showToast({
+							// 	icon: 'none',
+							// 	title: '打卡成功'
+							// })
 							that.getSignRecord()
+							that.$refs.dialog.open()
 						}
 					})
 				} else {
@@ -259,18 +319,100 @@
 								createTime: new Date(),
 								latitude: this.currentLatitude,
 								longitude: this.currentLongitude,
-								distance: this.distance
+								distance: this.distance,
+								address: this.currentAddress
 							}
 						},
 						success() {
-							uni.showToast({
-								icon: 'none',
-								title: '打卡成功'
-							})
+							// uni.showToast({
+							// 	icon: 'none',
+							// 	title: '打卡成功'
+							// })
 							that.getSignRecord()
+							that.$refs.dialog.open()
 						}
 					})
 				}
+
+			},
+			handleSendAddress(){
+				let data = {
+					"touser": "@all",
+					"msgtype": "news",
+					"agentid": 1000003,
+					"news": {
+						"articles": [{
+							"title": `${this.userInfo.nickname}位置通知`,
+							"description": `当前时间\n${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())}\n我目前的位置是\n${this.currentAddress}`,
+							"picurl": `${this.userInfo.avatar_file.url}`
+						}]
+					},
+				}
+				this.sendQYWX(data)
+			},
+			confirm() {
+				let params = {
+					"msgtype": "markdown",
+					"markdown": {
+						"title": "打卡提醒",
+						"text": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${this.distance}\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`,
+						"content": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${this.distance}\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`
+					},
+					"at": {
+						"isAtAll": true
+					}
+				}
+				// this.sendDDmsg(params)
+				let data = {
+					"touser": "@all",
+					"msgtype": "news",
+					"agentid": 1000003,
+					"news": {
+						"articles": [{
+							"title": `${this.userInfo.nickname}打卡提醒`,
+							"description": `时间：${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())} \n经度：${this.currentLongitude} \n纬度：${this.currentLatitude} \n距离：${this.distance}\n位置：${this.currentAddress} \n${this.customMsg}`,
+							"picurl": `${this.userInfo.avatar_file.url}`
+						}]
+					},
+				}
+				this.sendQYWX(data)
+			},
+			sendQYWX(params) {
+				let that = this
+				uniCloud.callFunction({
+					name: 'xcxcontact',
+					data: {
+						action: 'sendQYWX',
+						params: params
+					},
+					success() {
+						that.$refs.dialog.close()
+						that.$refs.medialog.open()
+					}
+				})
+			},
+			sendDDmsg(params) {
+				let that = this
+				uniCloud.callFunction({
+					name: 'xcxcontact',
+					data: {
+						action: 'sendDDMsg',
+						params: params
+					},
+					success() {
+						that.$refs.dialog.close()
+					}
+				})
+				// uniCloud.callFunction({
+				// 	name: 'xcxcontact',
+				// 	data: {
+				// 		action: 'sendQYWXMsg',
+				// 		params: params
+				// 	},
+				// 	success() {
+				// 		that.$refs.dialog.close()
+				// 	}
+				// })
 			},
 			async getSignRecord() {
 				let that = this
@@ -301,7 +443,9 @@
 		position: relative;
 		padding-bottom: 2px;
 		display: flex;
+		flex-direction: column;
 		justify-content: center;
+		align-items: center;
 
 		.tip-btn {
 			margin-top: 100px;
@@ -319,11 +463,15 @@
 		.can-sign {
 			background: radial-gradient(#41C7AF, #54E38E);
 			color: #ffffff;
+			font-size: 16px;
+			line-height: 24px;
 		}
 
 		.cant-sign {
-			background: radial-gradient(#FDEB82, #E6A23C);
-			color: #eeeeee;
+			background: radial-gradient(#cebf6a, #f1aa3e);
+			color: #ffffff;
+			font-size: 16px;
+			line-height: 24px;
 		}
 	}
 
@@ -356,5 +504,46 @@
 		text-align: center;
 		font-size: 12px;
 		color: #e64340;
+	}
+
+	.winner-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+		border: 1px solid gold;
+		color: goldenrod;
+		width: 100px;
+		height: 100px;
+		margin: 8px 0;
+
+		.image {
+			width: 100px;
+			height: 100px;
+		}
+	}
+
+	.popup-win {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.desc {
+		margin-top: 8px;
+		text-align: center;
+	}
+
+	.tips {
+		font-size: 12px
+	}
+
+	.ad {
+		font-size: 12px;
+		color: #cccccc;
+		text-align: center;
+		margin-top: 10px;
 	}
 </style>

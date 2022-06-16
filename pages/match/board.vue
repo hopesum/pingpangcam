@@ -21,7 +21,9 @@
 						</view>
 						<uni-row>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
+								<view class="item">
+									总积分：{{matchInfo.matchId?(Number(user.integral)+Number(matchBaseScore)):Number(user.integral)}}
+								</view>
 							</uni-col>
 							<uni-col :span="8">
 								<view class="item">胜率：{{user.rate}}</view>
@@ -32,13 +34,14 @@
 						</uni-row>
 						<uni-row>
 							<uni-col :span="8">
-								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+								<view class="item">总场数：{{(Number(user.winMatch) || 0) + (Number(user.failMatch) || 0)}}
+								</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">胜场：{{user.winMatch || 0}}</view>
+								<view class="item">胜场：{{Number(user.winMatch) || 0}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">负场：{{user.failMatch || 0}}</view>
+								<view class="item">负场：{{Number(user.failMatch) || 0}}</view>
 							</uni-col>
 						</uni-row>
 					</uni-card>
@@ -51,7 +54,9 @@
 								<view class="item">胜率：{{user.rate}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
+								<view class="item">
+									总积分：{{matchInfo.matchId?(Number(user.integral)+Number(matchBaseScore)):Number(user.integral)}}
+								</view>
 							</uni-col>
 							<uni-col :span="8">
 								<view class="item">KD：{{user.KD}}</view>
@@ -59,13 +64,14 @@
 						</uni-row>
 						<uni-row>
 							<uni-col :span="8">
-								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+								<view class="item">总场数：{{(Number(user.winMatch) || 0) + (Number(user.failMatch) || 0)}}
+								</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">胜场：{{user.winMatch || 0}}</view>
+								<view class="item">胜场：{{Number(user.winMatch) || 0}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">负场：{{user.failMatch || 0}}</view>
+								<view class="item">负场：{{Number(user.failMatch) || 0}}</view>
 							</uni-col>
 						</uni-row>
 					</uni-card>
@@ -81,18 +87,21 @@
 								<view class="item">胜率：{{user.rate}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">总积分：{{user.integral+matchBaseScore}}</view>
+								<view class="item">
+									总积分：{{matchInfo.matchId?(Number(user.integral)+Number(matchBaseScore)):Number(user.integral)}}
+								</view>
 							</uni-col>
 						</uni-row>
 						<uni-row>
 							<uni-col :span="8">
-								<view class="item">总场数：{{(user.winMatch || 0) + (user.failMatch || 0)}}</view>
+								<view class="item">总场数：{{(Number(user.winMatch) || 0) + (Number(user.failMatch) || 0)}}
+								</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">胜场：{{user.winMatch || 0}}</view>
+								<view class="item">胜场：{{Number(user.winMatch) || 0}}</view>
 							</uni-col>
 							<uni-col :span="8">
-								<view class="item">负场：{{user.failMatch || 0}}</view>
+								<view class="item">负场：{{Number(user.failMatch) || 0}}</view>
 							</uni-col>
 						</uni-row>
 					</uni-card>
@@ -166,8 +175,13 @@
 				if (!Object.keys(this.users).length) {
 					return []
 				}
+				console.log(this.users, '12456');
 				let tempList = Object.keys(this.users).map(key => this.users[key])
-				tempList.splice(tempList.findIndex(el => el.nickname === '补分选手'), 1)
+				console.log('tempList', tempList);
+				let bufenIndex = tempList.findIndex(el => el.nickname === '补分选手')
+				if (bufenIndex !== -1) {
+					tempList.splice(bufenIndex, 1)
+				}
 				tempList = tempList.map(user => {
 					return {
 						avatar: user.avatar,
@@ -221,7 +235,7 @@
 				uni.setNavigationBarTitle({
 					title: '赛事对战榜单'
 				})
-			}else{
+			} else {
 				uni.setNavigationBarTitle({
 					title: '总对战榜单'
 				})
@@ -244,6 +258,7 @@
 				this.$forceUpdate()
 			},
 			chartData(user) {
+				console.log('user', user.nickname);
 				let fight = user.fight
 				let categories = Object.keys(fight)
 				let data = categories.map(userId => {
@@ -303,12 +318,12 @@
 			async getSectionList() {
 				let that = this
 				let data
-				if(this.matchInfo.matchId){
+				if (this.matchInfo.matchId) {
 					data = {
 						action: 'getSectionList',
 						params: this.matchInfo
 					}
-				}else{
+				} else {
 					data = {
 						action: 'getAllSectionList'
 					}
@@ -325,9 +340,9 @@
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].winMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
-								users[el.userId].integral += el.integral
+								users[el.userId].win += el.tag == '补分' ? 0 : Number(el.win)
+								users[el.userId].fail += el.tag == '补分' ? 0 : Number(el.fail)
+								users[el.userId].integral += Number(el.integral)
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -337,18 +352,18 @@
 									score: el.score,
 									winMatch: 1,
 									failMatch: 0,
-									win: el.tag == '补分' ? 0 : el.win,
-									fail: el.tag == '补分' ? 0 : el.fail,
-									integral: el.integral
+									win: el.tag == '补分' ? 0 : Number(el.win),
+									fail: el.tag == '补分' ? 0 : Number(el.fail),
+									integral: Number(el.integral)
 								}
 							}
 						})
 						loserList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].failMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
-								users[el.userId].integral += el.integral
+								users[el.userId].win += el.tag == '补分' ? 0 : Number(el.win)
+								users[el.userId].fail += el.tag == '补分' ? 0 : Number(el.fail)
+								users[el.userId].integral += Number(el.integral)
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -358,9 +373,9 @@
 									score: el.score,
 									winMatch: 0,
 									failMatch: 1,
-									win: el.tag == '补分' ? 0 : el.win,
-									fail: el.tag == '补分' ? 0 : el.fail,
-									integral: el.integral
+									win: el.tag == '补分' ? 0 : Number(el.win),
+									fail: el.tag == '补分' ? 0 : Number(el.fail),
+									integral: Number(el.integral)
 								}
 							}
 						})

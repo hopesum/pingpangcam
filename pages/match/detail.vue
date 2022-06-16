@@ -54,6 +54,7 @@
 		},
 		methods: {
 			handleSure() {
+				console.log(this.matchBaseInfo);
 				const postData = {
 					matchId: this.matchId,
 					matchBaseScore: this.matchBaseScore,

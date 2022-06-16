@@ -5,6 +5,7 @@
 			<view>经度：{{item.latitude}}</view>
 			<view>纬度：{{item.longitude}}</view>
 			<view>距离：{{item.distance}}</view>
+			<view>地点：{{item.address}}</view>
 		</uni-card>
 		<uni-fab  ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
 	</view>

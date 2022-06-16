@@ -24,8 +24,8 @@
 						<image class="image" :src="user.avatar" mode="aspectFill" />
 						<view class="user-name">
 							<text class="text">{{user.nickname}}</text>
-							<input v-if="user.nickname==='补分选手'" type="text" v-model="user.realname"
-								placeholder="真名" style="width: 50px;font-size: 12px;border: 1px #eee solid;margin-top: 4px;" />
+							<input v-if="user.nickname==='补分选手'" type="text" v-model="user.realname" placeholder="真名"
+								style="width: 50px;font-size: 12px;border: 1px #eee solid;margin-top: 4px;" />
 						</view>
 						<view
 							:class="['left-ball-empty',(showBall==='left'&&index===0)?'left-ball-o':'',(showBall==='right'&&index===1)?'right-ball-o':'']"
@@ -102,6 +102,21 @@
 				</view>
 			</uni-popup-dialog>
 		</uni-popup>
+		<uni-popup ref="redialog" type="dialog">
+			<uni-popup-dialog :duration="2000" @confirm="confirms">
+				<view class="popup-win">
+					<!-- <view class="tips">加入钉钉：44663557获取通知</view> -->
+					<view class="tips">加入企业微信获取通知</view>
+					<view class="winner-container">
+						<image class="image" src="/static/images/qywx.png" mode="aspectFill" />
+					</view>
+					<uni-easyinput v-model="customMsg" placeholder="" />
+					<view class="desc">
+						对战上传成功，是否通知各位围观？
+					</view>
+				</view>
+			</uni-popup-dialog>
+		</uni-popup>
 		<view v-if="setctionId" class="divFooter">
 			<button class="uni-button cus-btn" plain type="primary" @click="handleBoard">排行榜</button>
 			<button class="uni-button cus-btn" type="primary" @click="handleResubmit">订正积分</button>
@@ -124,6 +139,7 @@
 				currentLevel: [0, 0],
 				items: ['三局两胜', '五局三胜', '七局四胜'],
 				levels: ['一级选手', '二级选手'],
+				customMsg: '速来围观！！！！',
 				rules: {
 					// baseIntegral: 500,
 					sameRuleWin: 100,
@@ -132,7 +148,8 @@
 					unSameRuleLowLevelFail: -20,
 					unSameRuleHighLevelWin: 100,
 					unSameRuleHighLevelFail: -80,
-				}
+				},
+				cacheSection: {}
 			}
 		},
 		watch: {
@@ -196,12 +213,31 @@
 		},
 		onLoad(option) {
 			this.matchBaseInfo = JSON.parse(decodeURIComponent(option.matchBaseInfo));
+			console.log(this.matchBaseInfo);
 			this.rules = this.matchBaseInfo.matchRules
+			console.log(this.rules);
 			this.matchBaseInfo.battleUser.forEach(user => {
 				this.$set(user, 'level', 0)
 			})
 		},
 		methods: {
+			dateFormat(time, flag) {
+				let date = new Date(time);
+				let year = date.getFullYear();
+				// 在日期格式中，月份是从0开始的，因此要加0，使用三元表达式在小于10的前面加0，以达到格式统一  如 09:11:05
+				let month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
+				let day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+				let hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
+				let minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+				let seconds = date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds();
+				// 拼接
+				// return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+				// return year + "-" + month + "-" + day;
+				if (flag) {
+					return year + "-" + month + "-" + day
+				}
+				return year + "-" + month + "-" + day + ' ' + hours + ":" + minutes + ":" + seconds;
+			},
 			handleBoard() {
 				uni.navigateTo({
 					url: `/pages/match/board?matchId=${this.matchBaseInfo.matchId}&matchName=${this.matchBaseInfo.matchName}`
@@ -366,9 +402,43 @@
 								icon: "none",
 								title: '保存成功'
 							})
+							that.cacheSection = Object.assign({}, {
+								...postData,
+								createUserName: that.userInfo.nickname
+							})
+							that.$refs.redialog.open()
 						}
 					})
 				}
+			},
+			confirms() {
+				console.log(this.cacheSection, '123456');
+				let data = {
+					"touser": "@all",
+					"msgtype": "news",
+					"agentid": 1000003,
+					"news": {
+						"articles": [{
+							"title": `恭喜${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')}取得胜利，获得积分${this.cacheSection.winner.integral}`,
+							"description": `比赛时间：${this.dateFormat(this.cacheSection.createTime)} \n裁判：${this.cacheSection.createUserName} \n对战双方：${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')} vs ${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}  \n比分：${this.cacheSection.winner.win} : ${this.cacheSection.loser.win} \n${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')}取得胜利，获得积分${this.cacheSection.winner.integral} \n${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}遗憾告负，获得积分${this.cacheSection.loser.integral} \n${this.customMsg}`,
+							"picurl": `${this.cacheSection.winner.avatar}`
+						}]
+					},
+				}
+				this.sendQYWX(data)
+			},
+			sendQYWX(params) {
+				let that = this
+				uniCloud.callFunction({
+					name: 'xcxcontact',
+					data: {
+						action: 'sendQYWX',
+						params: params
+					},
+					success() {
+						that.$refs.redialog.close()
+					}
+				})
 			},
 			handleResubmit() {
 				this.$refs.reDialog.open()
@@ -574,10 +644,15 @@
 	.user-right {
 		border: 1px solid #F56C6C;
 	}
-	.user-name{
+
+	.user-name {
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		white-space: nowrap;
+	}
+
+	.tips {
+		font-size: 12px
 	}
 </style>

@@ -3,7 +3,6 @@
 		<swiper v-if="matchList.length&&bannerList.length" class="swiper" circular :indicator-dots="true"
 			:autoplay="true" :interval="4000" :duration="500">
 			<swiper-item class="swiper-item" v-for="(item,index) in bannerList" :key="index" @click="handleBanner">
-				<view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view>
 				<view :class="['user-container']">
 					<view class="user-left">
 						<image class="banner-img" :src="item.avatar" mode="aspectFill" :draggable="false"></image>
@@ -34,6 +33,7 @@
 					</view>
 				</view>
 			</swiper-item>
+			<view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view>
 		</swiper>
 		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
 			:cover="match.image||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
@@ -68,14 +68,14 @@
 						</uni-forms-item>
 						<uni-forms-item required label="图片" name="image">
 							<cloud-image @click="uploadAvatarImg" v-if="formData.image" :src="formData.image"
-								width="60px" height="40px"></cloud-image>
+								width="75px" height="40px"></cloud-image>
 							<view v-else class="chooseAvatar">
 								<uni-icons @click="uploadAvatarImg" type="plusempty" size="30" color="#dddddd">
 								</uni-icons>
 							</view>
 						</uni-forms-item>
 						<uni-forms-item required label="底分" name="baseScore">
-							<uni-easyinput type="text" v-model="formData.baseScore" />
+							<uni-easyinput type="number" v-model="formData.baseScore" />
 						</uni-forms-item>
 						<uni-forms-item required label="同级胜">
 							<uni-easyinput type="number" v-model="formData.rules.sameRuleWin" />
@@ -116,7 +116,7 @@
 	export default {
 		data() {
 			return {
-				rainNum: 20,
+				rainNum: 40,
 				matchList: [],
 				bannerList: [],
 				formData: {
@@ -143,17 +143,28 @@
 				hasLogin: 'user/hasLogin'
 			})
 		},
-		onLoad() {
+		async onLoad() {
+			await this.checkToken()
 			this.getMatchList()
 		},
 		async onPullDownRefresh() {
+			await this.checkToken()
 			await this.getMatchList()
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			async checkToken() {
+				let now = new Date().getTime()
+				let tokenExpired = this.$store.state.user.info?.tokenExpired || 0
+				if (tokenExpired - now < 0) {
+					uni.navigateTo({
+						url: '/pages/ucenter/login-page/index/index'
+					})
+				}
+			},
 			rain(index) {
 				return {
-					left: (Math.random() * 750) + 'px',
+					left: (Math.random() * 2000) + 'px',
 					animationDelay: Math.random() * -5 + 's',
 					animationDuration: 1 + Math.random() * 5 + 's',
 					background: `linear-gradient(transparent, rgb(${255*Math.random()},${255*Math.random()},${255*Math.random()}))`
@@ -167,7 +178,7 @@
 			uploadAvatarImg(res) {
 				const crop = {
 					quality: 100,
-					width: 600,
+					width: 750,
 					height: 400,
 					resize: true
 				};
@@ -254,9 +265,9 @@
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].winMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
-								users[el.userId].integral += el.integral
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win * 1
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail * 1
+								users[el.userId].integral += el.integral * 1
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -266,18 +277,18 @@
 									score: el.score,
 									winMatch: 1,
 									failMatch: 0,
-									win: el.tag == '补分' ? 0 : el.win,
-									fail: el.tag == '补分' ? 0 : el.fail,
-									integral: el.integral
+									win: el.tag == '补分' ? 0 : el.win * 1,
+									fail: el.tag == '补分' ? 0 : el.fail * 1,
+									integral: el.integral * 1
 								}
 							}
 						})
 						loserList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].failMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail
-								users[el.userId].integral += el.integral
+								users[el.userId].win += el.tag == '补分' ? 0 : el.win * 1
+								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail * 1
+								users[el.userId].integral += el.integral * 1
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -287,9 +298,9 @@
 									score: el.score,
 									winMatch: 0,
 									failMatch: 1,
-									win: el.tag == '补分' ? 0 : el.win,
-									fail: el.tag == '补分' ? 0 : el.fail,
-									integral: el.integral
+									win: el.tag == '补分' ? 0 : el.win * 1,
+									fail: el.tag == '补分' ? 0 : el.fail * 1,
+									integral: el.integral * 1
 								}
 							}
 						})
@@ -377,6 +388,7 @@
 			},
 			addMatch() {
 				let that = this
+				console.log(this.formData, 'formData');
 				if (this.formData._id) {
 					uniCloud.callFunction({
 						name: 'match',
@@ -406,7 +418,7 @@
 			},
 			updateMatch() {},
 			editMatch(match) {
-				this.formData = match
+				this.formData = Object.assign({}, this.formData, match)
 				this.$refs.popup.open()
 			},
 			deleteMatch(match) {
@@ -455,6 +467,7 @@
 				}
 			},
 			handleMatchDetail(match) {
+				console.log(match, 'match');
 				uni.navigateTo({
 					url: `/pages/match/detail?matchBaseInfo=${encodeURIComponent(JSON.stringify(match))}`
 				})
@@ -495,7 +508,7 @@
 
 	.divContainer {
 		font-size: 16px;
-		background: #f5f5f5;
+		// background: #f5f5f5;
 	}
 
 	.card {
@@ -561,23 +574,29 @@
 	.user-container {
 		display: flex;
 		height: 100%;
+		width: 100%;
 		// background: linear-gradient(145deg,  #41d8DD, #F5CCF6);
+		position: absolute;
+		z-index: 3;
 
 		.user-left {
 			flex: 1;
 			height: 100%;
-			// border: 1px solid red;
 			display: flex;
 			flex-direction: column;
+			z-index: 2;
+			position: relative;
 
 			.banner-img {
 				width: 100%;
 				height: 100%;
-				// border: 2px solid #ffd700;
+				border: 2px solid #ffd700;
 				box-sizing: border-box;
 				margin: 8px;
-				box-shadow: 2px 2px 6px #aaaaaa;
+				box-shadow: 2px 2px 6px #666;
 				border-radius: 4px;
+				position: relative;
+				z-index: 2;
 				// animation: bannerImageScale 4s infinite;
 			}
 		}
@@ -591,6 +610,7 @@
 			flex-direction: column;
 			justify-content: center;
 			position: relative;
+			z-index: 2;
 			// align-items: center;			
 		}
 	}
@@ -606,7 +626,7 @@
 		animation: bannerImageScale 4s infinite;
 		color: #fff;
 		font-size: 35px;
-		text-shadow: 2px 2px 4px #aaa;
+		text-shadow: 2px 2px 4px #666;
 	}
 
 	.user-info {
@@ -637,12 +657,13 @@
 	}
 
 	.swiper {
-		padding: 10px;
+		// padding: 15px;
 		background: #f5f5f5;
 
 		.swiper-item {
-			position: relative;
-			background-color: rgba(0, 0, 0, .2);
+			position: absolute;
+			background-color: rgba(85, 170, 255, 0.1);
+			z-index: 2;
 			// background: #ffffff;
 		}
 	}
@@ -655,7 +676,7 @@
 		border: dotted 1px #ddd;
 		border-radius: 10px;
 		text-align: center;
-		width: 60px;
+		width: 75px;
 		height: 40px;
 		line-height: 40px;
 	}
@@ -668,6 +689,7 @@
 		height: 60px;
 		border-radius: 0 0 5px 5px;
 		animation: dropRain 5s linear infinite;
+		z-index: 1;
 	}
 
 	.rain:nth-child(3n+1) {

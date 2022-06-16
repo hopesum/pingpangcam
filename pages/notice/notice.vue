@@ -24,11 +24,11 @@
 					<uni-icons type="checkmarkempty" color="#67C23A" size="30" @click="addNotice"></uni-icons>
 				</view>
 				<scroll-view scroll-y="true" class="scroll-Y">
-				<uni-forms :modelValue="formData">
-					<uni-forms-item required label="内容" name="content">
-						<uni-easyinput :maxlength="-1" autoHeight type="textarea" v-model="formData.content" />
-					</uni-forms-item>
-				</uni-forms>
+					<uni-forms :modelValue="formData">
+						<uni-forms-item required label="内容" name="content">
+							<uni-easyinput :maxlength="-1" autoHeight type="textarea" v-model="formData.content" />
+						</uni-forms-item>
+					</uni-forms>
 				</scroll-view>
 			</view>
 		</uni-popup>
@@ -36,6 +36,21 @@
 			<uni-popup-dialog :duration="2000" @confirm="confirm">
 				<view class="desc">
 					数据删除后无法恢复，是否删除？
+				</view>
+			</uni-popup-dialog>
+		</uni-popup>
+		<uni-popup ref="redialog" type="dialog">
+			<uni-popup-dialog :duration="2000" @confirm="confirms">
+				<view class="popup-win">
+					<!-- <view class="tips">加入钉钉：44663557获取通知</view> -->
+					<view class="tips">加入企业微信获取通知</view>
+					<view class="winner-container">
+						<image class="image" src="/static/images/qywx.png" mode="aspectFill" />
+					</view>
+					<uni-easyinput v-model="customMsg" placeholder="" />
+					<view class="desc">
+						公告发布成功，是否通知各位？
+					</view>
 				</view>
 			</uni-popup-dialog>
 		</uni-popup>
@@ -56,6 +71,7 @@
 					createTime: new Date(),
 					content: ''
 				},
+				customMsg: '速来围观'
 			}
 		},
 		computed: {
@@ -77,11 +93,15 @@
 				this.$refs.dialog.open()
 			},
 			confirm() {
+				let that = this
 				uniCloud.callFunction({
 					name: 'notice',
 					data: {
 						action: 'deleteNotice',
 						params: this.oprateNotice
+					},
+					success() {
+						that.getNotice()
 					}
 				})
 			},
@@ -155,10 +175,34 @@
 						success() {
 							that.$refs.popup.close()
 							that.getNotice()
+							that.$refs.redialog.open()
 						}
 					})
 				}
-
+			},
+			confirms() {
+				let data = {
+					"touser": "@all",
+					"msgtype": "text",
+					"agentid": 1000003,
+					"text": {
+						"content": `今日要闻:${this.formData.content}\n${this.customMsg}`
+					},
+				}
+				this.sendQYWX(data)
+			},
+			sendQYWX(params) {
+				let that = this
+				uniCloud.callFunction({
+					name: 'xcxcontact',
+					data: {
+						action: 'sendQYWX',
+						params: params
+					},
+					success() {
+						that.$refs.redialog.close()
+					}
+				})
 			},
 		}
 	}
@@ -176,11 +220,13 @@
 			background: #ffffff;
 			height: 80vh;
 			position: relative;
-			.scroll-Y{
+
+			.scroll-Y {
 				height: 100%;
 				padding: 10px 20px 40px;
 				box-sizing: border-box;
 			}
+
 			.form-header {
 				display: flex;
 				justify-content: space-between;
@@ -202,5 +248,39 @@
 		.btn {
 			margin-left: 4px;
 		}
+	}
+
+	.winner-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+		border: 1px solid gold;
+		color: goldenrod;
+		width: 100px;
+		height: 100px;
+		margin: 8px 0;
+
+		.image {
+			width: 100px;
+			height: 100px;
+		}
+	}
+
+	.popup-win {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.desc {
+		margin-top: 8px;
+		text-align: center;
+	}
+
+	.tips {
+		font-size: 12px
 	}
 </style>
