@@ -258,7 +258,6 @@
 				this.$forceUpdate()
 			},
 			chartData(user) {
-				console.log('user', user.nickname);
 				let fight = user.fight
 				let categories = Object.keys(fight)
 				let data = categories.map(userId => {
@@ -379,6 +378,7 @@
 								}
 							}
 						})
+						
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {
