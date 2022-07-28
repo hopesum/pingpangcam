@@ -18,7 +18,8 @@
 		</view> -->
 		<view class="divFooter">
 			<view class="distance">{{distance}}</view>
-			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">打卡记录</button>
+			<button class="uni-button cus-btn " type="warn" plain @click="handleSignCalendar">出勤日历</button>
+			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">所有记录</button>
 			<button class="uni-button cus-btn " type="warn" @click="handleSendAddress">位置通知</button>
 			<button v-if="hasLogin&&uniIDHasRole('admin')" class="uni-button cus-btn" plain type="primary"
 				@click="handleRule">规则设置</button>
@@ -433,7 +434,12 @@
 				uni.navigateTo({
 					url: '/pages/sign/record'
 				})
-			}
+			},
+			handleSignCalendar() {
+				uni.navigateTo({
+					url: '/pages/sign/calendar'
+				})
+			},
 		}
 	}
 </script>
@@ -470,7 +476,7 @@
 		.cant-sign {
 			background: radial-gradient(#cebf6a, #f1aa3e);
 			color: #ffffff;
-			font-size: 16px;
+			font-size: 12px;
 			line-height: 24px;
 		}
 	}
@@ -484,7 +490,7 @@
 		display: flex;
 
 		.cus-btn {
-			font-size: 14px;
+			font-size: 12px;
 			flex: 1;
 			margin: 4px;
 		}

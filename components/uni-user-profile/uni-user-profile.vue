@@ -20,7 +20,7 @@
 	const usersTable = db.collection('uni-id-users')
 	let userId = ''
 	export default {
-		emits: ['next'],
+		emits:['next'],
 		computed: {
 			...mapGetters({
 				userInfo: 'user/info',
@@ -34,52 +34,38 @@
 			...mapMutations({
 				setUserInfo: 'user/login'
 			}),
-			async open(uid) {
+			async open(uid){
 				userId = uid
 				this.$refs.popup.open()
 			},
-			async getUserProfile() {
+			async getUserProfile(){
 				uni.showLoading();
 				let res = await new Promise((callBack) => {
 					uni.getUserProfile({
 						desc: "用于设置账户昵称和头像",
 						complete: (e) => {
-							console.log(e,'*******************************');
-							let obj
-							if (e?.userInfo?.avatarUrl) {
-								obj = Object.assign({}, e)
-							} else {
-								obj = Object.assign({}, e, {
-									userInfo: {
-										nickname: new Date(),
-										avatarUrl: 'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'
-									}
-								})
-							}
-							callBack(obj)
+							// console.log("getUserProfile:", e);
+							callBack(e)
 						}
 					})
 				})
 				// console.log("userInfo", res.userInfo);
-				if (res.errMsg != "getUserProfile:ok") {
+				if(res.errMsg != "getUserProfile:ok"){
 					return this.closeMe()
 				}
-				let {
-					avatarUrl,
-					nickName
-				} = res.userInfo,
-					cloudPath = userId + '/' + Date.now() + 'avatarUrl.jpg';
-
-				let tempFilePath = await new Promise((callBack) => {
+				let {avatarUrl,nickName} = res.userInfo,				
+					cloudPath = userId+'/'+Date.now()+'avatarUrl.jpg';
+				
+				let tempFilePath = await new Promise((callBack)=>{
 					uni.downloadFile({
-						url: avatarUrl,
-						success: (res) => {
-							if (res.statusCode === 200) {
-								// console.log('下载成功');
+					    url: avatarUrl,
+					    success: (res) => {
+					        if (res.statusCode === 200) {
+					            // console.log('下载成功');
 								callBack(res.tempFilePath)
-							}
+					        }
 							callBack()
-						},
+					    },
 						fail: (err) => {
 							console.error(err)
 						},
@@ -92,31 +78,29 @@
 				const result = await uniCloud.uploadFile({
 					filePath: tempFilePath,
 					cloudPath,
-					fileType: 'image'
+					fileType:'image'
 				});
 				// console.log("上传成功",{result});
 				let userInfo = {
-					"nickname": nickName,
-					"avatar_file": {
-						name: cloudPath,
-						extname: "jpg",
-						url: result.fileID
+					"nickname":nickName,
+					"avatar_file":{
+						name:cloudPath,
+						extname:"jpg",
+						url:result.fileID
 					}
 				}
-				this.doUpdate(userInfo, () => {
+				this.doUpdate(userInfo,()=>{
 					this.$refs.popup.close()
 				})
 			},
-			closeMe(e) {
+			closeMe(e){
 				uni.showLoading();
-				this.doUpdate({
-					nickname: "微信匿名用户"
-				}, () => {
+				this.doUpdate({nickname:"微信匿名用户"},()=>{
 					uni.hideLoading()
 					this.$refs.popup.close()
 				})
 			},
-			doUpdate(data, callback) {
+			doUpdate(data,callback){
 				// console.log('dododo',data);
 				// 使用 clientDB 提交数据
 				usersTable.where('_id==$env.uid').update(data).then((res) => {
@@ -140,83 +124,71 @@
 </script>
 
 <style lang="scss" scoped>
-	view {
-		display: flex;
-	}
-
-	.box {
-		background-color: #FFFFFF;
-		height: 200px;
-		width: 750rpx;
-		flex-direction: column;
-		border-top-left-radius: 15px;
-		border-top-right-radius: 15px;
-	}
-
-	.headBox {
-		padding: 20rpx;
-		height: 80rpx;
-		line-height: 80rpx;
-		text-align: left;
-		font-size: 32upx;
-		color: #333333;
-		margin-left: 15rpx;
-	}
-
-	.tip {
-		color: #666666;
-		text-align: left;
-		justify-content: center;
-		margin: 10rpx 30rpx;
-		font-size: 36rpx;
-	}
-
-	.btnBox {
-		margin-top: 45rpx;
-		justify-content: center;
-		flex-direction: row;
-	}
-
-	.close,
-	.agree {
-		text-align: center;
-		width: 200rpx;
-		height: 80upx;
-		line-height: 80upx;
-		border-radius: 50px;
-		margin: 0 20rpx;
-		font-size: 36rpx;
-	}
-
-	.close {
-		color: #999999;
-		border-color: #EEEEEE;
-		border-style: solid;
-		border-width: 1px;
-		background-color: #FFFFFF;
-	}
-
-	.close:active {
-		color: #989898;
-		background-color: #E2E2E2;
-	}
-
-	.agree {
-		background-color: #DD524D;
-		color: #FFFFFF;
-	}
-
-	/* #ifdef MP */
-	.agree::after {
-		border: none;
-	}
-
-	.agree {
-		background-color: #DD524D;
-	}
-
-	/* #endif */
-	.agree:active {
-		background-color: #F5F5F6;
-	}
+view{
+	display: flex;
+}
+.box{
+	background-color: #FFFFFF;
+	height:200px;
+	width: 750rpx;
+	flex-direction: column;
+	border-top-left-radius: 15px;
+	border-top-right-radius: 15px;
+}
+.headBox{
+	padding:20rpx;
+	height:80rpx;
+	line-height:80rpx;
+	text-align: left;
+	font-size:32upx;
+	color:#333333;
+	margin-left: 15rpx;
+}
+.tip{
+	color:#666666;
+	text-align: left;
+	justify-content: center;
+	margin:10rpx 30rpx;
+	font-size:36rpx;
+}
+.btnBox{
+	margin-top:45rpx;
+	justify-content: center;
+	flex-direction: row;
+}
+.close,.agree{
+	text-align: center;
+	width:200rpx;
+	height:80upx;
+	line-height:80upx;
+	border-radius:50px;
+	margin:0 20rpx;
+	font-size:36rpx;
+}
+.close{
+	color:#999999;
+	border-color: #EEEEEE;
+	border-style: solid;
+	border-width: 1px;
+	background-color:#FFFFFF;
+}
+.close:active{
+	color:#989898;
+	background-color:#E2E2E2;
+}
+.agree{
+	background-color:#DD524D;
+	color:#FFFFFF;
+}
+/* #ifdef MP */
+.agree::after {
+   border: none;
+}
+.agree{
+	background-color:#DD524D;
+}
+/* #endif */
+.agree:active{
+	background-color:#F5F5F6;
+}
 </style>

@@ -13,7 +13,8 @@
 			<view class="battle-user">
 				<view class="left">
 					<view class="">
-						<image class="avatar" :src="item.winner.avatar" mode="aspectFill" :draggable="false"></image>
+						<image class="avatar" lazy-load :src="item.winner.avatar" mode="aspectFill" :draggable="false">
+						</image>
 					</view>
 					<view class="name">
 						{{item.winner.nickname+(item.winner.realname?item.winner.realname:'')}}
@@ -31,7 +32,8 @@
 				</view>
 				<view class="right">
 					<view class="">
-						<image class="avatar" :src="item.loser.avatar" mode="aspectFill" :draggable="false"></image>
+						<image class="avatar" lazy-load :src="item.loser.avatar" mode="aspectFill" :draggable="false">
+						</image>
 					</view>
 					<view class="name">
 						{{item.loser.nickname+(item.loser.realname?item.loser.realname:'')}}
@@ -44,9 +46,21 @@
 					</view>
 				</view>
 			</view>
+			<view>
+				<uni-grid :column="3" :show-border="true" :square="true">
+					<uni-grid-item v-for="(video ,index1) in item.videoList" :index="index1" :key="index1">
+						<view v-if="video" class="grid-item-box">
+							<!-- <video :src="video"></video> -->
+							<div @click="handleVideo(video)">视频{{index1+1}}</div>
+						</view>
+					</uni-grid-item>
+				</uni-grid>
+			</view>
 			<template v-slot:actions>
-				<view v-if="(hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser)" class="btn-container">
-					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteSection(item)">删除</button>
+				<view class="btn-container">
+					<button size="mini" class="uni-button btn" type="primary" @click="uploadVideo(item)">上传视频</button>
+					<button v-if="(hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser)"
+						class="uni-button btn" size="mini" type="warn" @click.stop="deleteSection(item)">删除</button>
 				</view>
 			</template>
 		</uni-card>
@@ -67,7 +81,8 @@
 					<view v-if="userList.length">
 						<view class="user-dialog" v-for="(user,index) in userList" :key="index"
 							@click="handleSearchUser(user)">
-							<image class="avatar" :src="user.avatar" mode="aspectFill" :draggable="false"></image>
+							<image class="avatar" lazy-load :src="user.avatar" mode="aspectFill" :draggable="false">
+							</image>
 							<text>{{user.nickname}}</text>
 						</view>
 					</view>
@@ -89,6 +104,7 @@
 				sectionList: [],
 				oprateSection: {},
 				formData: {},
+				videoList: [],
 				userList: []
 			}
 		},
@@ -127,6 +143,51 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			handleVideo(video) {
+				uni.navigateTo({
+					url: '/pages/section/play?video=' + video
+				})
+			},
+			uploadVideo(section) {
+				let self = this
+				uni.chooseVideo({
+					// sourceType: ['camera', 'album'],
+					success: async (res) => {
+						let filePath = res.tempFilePath
+						let cloudPath = 'video' + Date.now()
+						uni.showLoading({
+							title: '上传中',
+							mask: true
+						});
+						let video = await uniCloud.uploadFile({
+							filePath,
+							cloudPath,
+							fileType: "video"
+						});
+						uni.hideLoading()
+						console.log(video);
+						if (!section.videoList) {
+							section.videoList = []
+						}
+						section.videoList.push(video.fileID)
+						console.log(section)
+						uniCloud.callFunction({
+							name: 'section',
+							data: {
+								action: 'updateSection',
+								params: section
+							},
+							success(ress) {
+								console.log(ress);
+								uni.showToast({
+									icon: "none",
+									title: '视频保存成功'
+								})
+							}
+						})
+					}
+				});
+			},
 			handleClose() {
 				this.$refs.popup.close()
 			},
@@ -252,9 +313,9 @@
 					})
 				}
 			},
-			handleBoard(){
+			handleBoard() {
 				uni.navigateTo({
-					url:'/pages/match/board'
+					url: '/pages/match/board'
 				})
 			}
 		}
@@ -399,7 +460,8 @@
 			border-radius: 4px;
 		}
 	}
-	.board-btn{
+
+	.board-btn {
 		position: fixed;
 		bottom: 60px;
 		right: 30px;
@@ -415,5 +477,33 @@
 		border-radius: 50%;
 		color: #ffffff;
 		font-weight: 600;
+	}
+
+	.grid-item-box {
+		flex: 1;
+		// position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+
+		.icon-delete {
+			position: absolute;
+			top: 5px;
+			right: 5px;
+		}
+	}
+
+	video {
+		object-fit: contain;
+		width: 100%;
+		height: 100%;
+	}
+
+	.mt-10 {
+		margin-top: 10px;
 	}
 </style>

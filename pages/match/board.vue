@@ -7,7 +7,7 @@
 			<uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="button"
 				activeColor="#409EFF"></uni-segmented-control>
 			<view class="content">
-				<view v-show="current === 0">
+				<view v-if="current === 0">
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
 						<view class="chart-container">
@@ -46,9 +46,18 @@
 						</uni-row>
 					</uni-card>
 				</view>
-				<view v-show="current === 1">
+				<view v-if="current === 1">
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
+						<view class="chart-container">
+							<view class="chart-switch">
+								<switch @change="switchChange($event,user)" style="transform:scale(0.7)">展示实际胜率</switch>
+							</view>
+							<view class="box">
+								<qiun-data-charts :opts="opts" id="charts" type="radar" :chartData="chartData(user)"
+									background="none" :resshow="true" />
+							</view>
+						</view>
 						<uni-row>
 							<uni-col :span="8">
 								<view class="item">胜率：{{user.rate}}</view>
@@ -76,9 +85,18 @@
 						</uni-row>
 					</uni-card>
 				</view>
-				<view v-show="current === 2">
+				<view v-if="current === 2">
 					<uni-card v-for="(user,index) in tableData" :key="index" :title="user.nickname"
 						:extra="'NO.'+String(++index)" :thumbnail="user.avatar">
+						<view class="chart-container">
+							<view class="chart-switch">
+								<switch @change="switchChange($event,user)" style="transform:scale(0.7)">展示实际胜率</switch>
+							</view>
+							<view class="box">
+								<qiun-data-charts :opts="opts" id="charts" type="radar" :chartData="chartData(user)"
+									background="none" :resshow="true" />
+							</view>
+						</view>
 						<uni-row>
 							<uni-col :span="8">
 								<view class="item">KD：{{user.KD}}</view>

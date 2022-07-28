@@ -51,22 +51,19 @@
 			},
 			async getSignRecord() {
 				let that = this
+				// await uniCloud.callFunction({
+				// 	name: 'signRecord',
+				// 	data: {
+				// 		action: 'getSignRecordList',
+				// 		params: {
+				// 			userId: this.$store.state.user.info._id,
+				// 		}
+				// 	},
+				// 	success(res) {
+				// 		that.signRecordList = res.result.data
+				// 	}
+				// })
 				await uniCloud.callFunction({
-					name: 'signRecord',
-					data: {
-						action: 'getSignRecordList',
-						params: {
-							userId: this.$store.state.user.info._id,
-						}
-					},
-					success(res) {
-						that.signRecordList = res.result.data
-					}
-				})
-			},
-			fabClick() {
-				let that = this
-				uniCloud.callFunction({
 					name: 'signRecord',
 					data: {
 						action: 'getSignRecordListAdmin',
@@ -75,6 +72,22 @@
 					success(res) {
 						that.signRecordList = res.result.data
 					}
+				})
+			},
+			fabClick() {
+				// let that = this
+				// uniCloud.callFunction({
+				// 	name: 'signRecord',
+				// 	data: {
+				// 		action: 'getSignRecordListAdmin',
+				// 		params: {}
+				// 	},
+				// 	success(res) {
+				// 		that.signRecordList = res.result.data
+				// 	}
+				// })
+				uni.navigateTo({
+					url:'/pages/sign/calendar'
 				})
 			}
 		}

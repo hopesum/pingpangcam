@@ -35,7 +35,8 @@
 			</swiper-item>
 			<view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view>
 		</swiper>
-		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
+		<view class="board-btn" @click="handleBoard">排行榜</view>
+		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name" :extra="dateFormat(match.createTime)"
 			:cover="match.image||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
 			@click="handleMatchDetail(match)">
 			<view class="title">
@@ -128,11 +129,11 @@
 					rules: {
 						// baseIntegral: 500,
 						sameRuleWin: 100,
-						sameRuleFail: -20,
+						sameRuleFail: -80,
 						unSameRuleLowLevelWin: 200,
-						unSameRuleLowLevelFail: -20,
+						unSameRuleLowLevelFail: -80,
 						unSameRuleHighLevelWin: 100,
-						unSameRuleHighLevelFail: -80,
+						unSameRuleHighLevelFail: -100,
 					}
 				},
 				deleteMatchInfo: {}
@@ -153,6 +154,25 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			dateFormat(time, flag) {
+				let date = new Date(time);
+				let year = date.getFullYear();
+				// 在日期格式中，月份是从0开始的，因此要加0，使用三元表达式在小于10的前面加0，以达到格式统一  如 09:11:05
+				let month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
+				let day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+				let hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
+				let minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+				let seconds = date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds();
+				// 拼接
+				// return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+				// return year + "-" + month + "-" + day;
+				return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+			},
+			handleBoard(){
+				uni.navigateTo({
+					url:'/pages/match/board'
+				})
+			},
 			async checkToken() {
 				let now = new Date().getTime()
 				let tokenExpired = this.$store.state.user.info?.tokenExpired || 0
@@ -449,11 +469,11 @@
 					rules: {
 						// baseIntegral: 500,
 						sameRuleWin: 100,
-						sameRuleFail: -20,
-						unSameRuleLowLevelWin: 200,
-						unSameRuleLowLevelFail: -20,
-						unSameRuleHighLevelWin: 100,
-						unSameRuleHighLevelFail: -80,
+						sameRuleFail: -80,
+						unSameRuleLowLevelWin: 100,
+						unSameRuleLowLevelFail: -40,
+						unSameRuleHighLevelWin: 80,
+						unSameRuleHighLevelFail: -100,
 					}
 				}
 				this.$refs.popup.open()
@@ -712,5 +732,22 @@
 		100% {
 			transform: translateY(300px);
 		}
+	}
+	.board-btn{
+		position: fixed;
+		bottom: 90px;
+		right: 16px;
+		z-index: 1;
+		width: 52px;
+		height: 52px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 14px;
+		background: #007aff;
+		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+		border-radius: 50%;
+		color: #ffffff;
+		font-weight: 600;
 	}
 </style>

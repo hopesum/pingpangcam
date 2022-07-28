@@ -6,7 +6,7 @@
 					@clickItem="onClickItem" />
 			</view>
 			<view class="header">
-				<view :class="['user',index==0?'user-left':'user-right']"
+				<view :class="['user',index==0?'user-left':'user-right',(index%2!=0&&order)?'order-left':'order-right']"
 					v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
 					<view class="step">
 						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
@@ -32,6 +32,22 @@
 							type="smallcircle-filled" size="20"></view>
 					</view>
 				</view>
+			</view>
+		</view>
+		<view class="">
+			<uni-grid :column="3" :show-border="true" :square="true">
+				<uni-grid-item v-for="(item ,index) in videoList" :index="index" :key="index">
+					<view v-if="item" class="grid-item-box">
+						<video :src="item"></video>
+					</view>
+					<view class="del-container" @click="handleDeleteVideo(item,index)">
+						<uni-icons color="#F56C6C" size="15" type="trash" class="icon-delete"></uni-icons>
+					</view>
+				</uni-grid-item>
+			</uni-grid>
+			<view class="btn-container">
+				<button class="uni-button" size="mini" type="warn" plain @click="changePosition">切换位置</button>
+				<button class="uni-button ml-10" size="mini" type="primary" @click="uploadVideo">上传视频</button>
 			</view>
 		</view>
 		<uni-card class="card-container" title="积分规则">
@@ -149,7 +165,9 @@
 					unSameRuleHighLevelWin: 100,
 					unSameRuleHighLevelFail: -80,
 				},
-				cacheSection: {}
+				cacheSection: {},
+				order: false,
+				videoList: []
 			}
 		},
 		watch: {
@@ -245,6 +263,9 @@
 			},
 			handleEditRule() {
 				this.$refs.popup.open()
+			},
+			changePosition() {
+				this.order = !this.order
 			},
 			onClickItem(e) {
 				if (this.current !== e.currentIndex) {
@@ -342,7 +363,8 @@
 					loser: {
 						...loser,
 						fail: this.winner.win
-					}
+					},
+					videoList: this.videoList
 				}
 				if (this.setctionId) {
 					if (this.winner.nickname === '补分选手' || loser.nickname === '补分选手') {
@@ -412,15 +434,14 @@
 				}
 			},
 			confirms() {
-				console.log(this.cacheSection, '123456');
 				let data = {
 					"touser": "@all",
-					"msgtype": "news",
 					"agentid": 1000003,
+					"msgtype": "news",
 					"news": {
 						"articles": [{
 							"title": `恭喜${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')}取得胜利，获得积分${this.cacheSection.winner.integral}`,
-							"description": `比赛时间：${this.dateFormat(this.cacheSection.createTime)} \n裁判：${this.cacheSection.createUserName} \n对战双方：${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')} vs ${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}  \n比分：${this.cacheSection.winner.win} : ${this.cacheSection.loser.win} \n${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')}取得胜利，获得积分${this.cacheSection.winner.integral} \n${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}遗憾告负，获得积分${this.cacheSection.loser.integral} \n${this.customMsg}`,
+							"description": `比赛时间：${this.dateFormat(this.cacheSection.createTime)} \n裁判：${this.cacheSection.createUserName} \n对战双方：${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')} vs ${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}  \n比分：${this.cacheSection.winner.win} : ${this.cacheSection.loser.win} \n${this.cacheSection.winner.nickname+(this.cacheSection.winner.realname||'')}取得胜利，获得积分${this.cacheSection.winner.integral} \n${this.cacheSection.loser.nickname+(this.cacheSection.loser.realname||'')}遗憾告负，获得积分${this.cacheSection.loser.integral} \n \n ${this.cacheSection.videoList.length?'精彩视频可到小程序对战列表中查看':''} \n \n${this.customMsg} `,
 							"picurl": `${this.cacheSection.winner.avatar}`
 						}]
 					},
@@ -443,6 +464,31 @@
 			handleResubmit() {
 				this.$refs.reDialog.open()
 			},
+			uploadVideo() {
+				let self = this
+				uni.chooseVideo({
+					// sourceType: ['camera', 'album'],
+					success: async (res) => {
+						let filePath = res.tempFilePath
+						let cloudPath = 'video' + Date.now()
+						uni.showLoading({
+							title: '上传中',
+							mask: true
+						});
+						let video = await uniCloud.uploadFile({
+							filePath,
+							cloudPath,
+							fileType: "video"
+						});
+						uni.hideLoading()
+						console.log(video);
+						this.videoList.push(video.fileID)
+					}
+				});
+			},
+			handleDeleteVideo(item, index) {
+				this.videoList.splice(index, 1)
+			}
 		}
 	}
 </script>
@@ -500,7 +546,7 @@
 			.header {
 				display: flex;
 				justify-content: space-between;
-				margin: 20px 0;
+				// margin: 20px 0;
 
 				.user {
 					flex: 1;
@@ -654,5 +700,75 @@
 
 	.tips {
 		font-size: 12px
+	}
+
+	.grid-item-box {
+		flex: 1;
+		// position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+
+		.icon-delete {
+			position: absolute;
+			top: 5px;
+			right: 5px;
+		}
+	}
+
+	.grid-item-box-row {
+		flex: 1;
+		// position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		padding: 15px 0;
+	}
+
+	video {
+		object-fit: contain;
+		width: 100%;
+		height: 100%;
+	}
+
+	.ml-10 {
+		margin-left: 10px;
+	}
+
+	.del-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background-color: rgba(#F56C6C, 0.5);
+	}
+
+	.header {
+		position: relative;
+	}
+
+	.change {
+		position: absolute;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+
+	.order-left {
+		order: 0;
+	}
+
+	.order-right {
+		order: 1;
+	}
+	.btn-container{
+		text-align: right;
+		padding: 0 20px;
 	}
 </style>
