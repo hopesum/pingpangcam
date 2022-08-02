@@ -5,20 +5,20 @@
 		<!-- 登录框 -->
 		<view v-if="['apple','weixin'].includes(type)" class="quickLogin">
 			<image @click="quickLogin" :src="imgSrc" mode="widthFix" class="quickLoginBtn"></image>
-			<uni-agreements @setAgree="agree = $event"></uni-agreements>
-			<view class="tips">
+			<!-- <uni-agreements @setAgree="agree = $event"></uni-agreements> -->
+			<!-- <view class="tips">
 				<text>使用微信授权登录</text>
 				<text>点击微信登录时候请拒绝微信授权，拒绝授权后会生成默认账户</text>
 				<text class="danger">未拒绝微信授权将无法登录系统</text>
 				<text>拒绝授权后请手动修改账户名称和头像</text>
 				<text class="danger">未修改昵称和头像用户将被删除</text>
 				<text>完成以上步骤后即可使用微信登录</text>
-			</view>
+			</view> -->
 		</view>
 		<template v-else>
 			<input type="number" class="input-box" :inputBorder="false" v-model="phone" maxlength="11"
 				:placeholder="$t('common.phonePlaceholder')" />
-			<uni-agreements @setAgree="agree = $event"></uni-agreements>
+			<!-- <uni-agreements @setAgree="agree = $event"></uni-agreements> -->
 			<button class="get-code" :disabled="!isPhone || !agree" :type="isPhone&&agree?'primary':'default'"
 				@click="sendShortMsg">{{$t('login.getVerifyCode')}}</button>
 			<text class="tip">{{$t('login.phoneLoginTip')}}</text>
@@ -36,7 +36,7 @@
 			return {
 				type: "",
 				phone: "",
-				agree: false
+				agree: true
 			}
 		},
 		computed: {

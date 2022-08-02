@@ -201,6 +201,12 @@
 				"enablePullDownRefresh": true
 			}
 
+		},{
+			"path": "pages/section/play",
+			"style": {
+				"navigationBarTitleText": "视频记录"
+			}
+
 		}, {
 			"path": "pages/sign/sign",
 			"style": {
