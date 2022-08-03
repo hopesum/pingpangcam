@@ -12,7 +12,6 @@
 			}
 		},
 		onLoad(params) {
-			console.log(params.video);
 			this.video = params.video
 		}
 	}

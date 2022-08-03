@@ -47,7 +47,7 @@
 			</uni-grid>
 			<view class="btn-container">
 				<button class="uni-button" size="mini" type="warn" plain @click="changePosition">切换位置</button>
-				<button class="uni-button ml-10" size="mini" type="primary" @click="uploadVideo">上传视频</button>
+				<button class="uni-button ml-10" size="mini" type="primary" @click="uploadVideo" v-if="showVideo">上传视频</button>
 			</view>
 		</view>
 		<uni-card class="card-container" title="积分规则">
@@ -147,6 +147,7 @@
 	export default {
 		data() {
 			return {
+				showVideo:false,
 				setctionId: '',
 				showBall: '',
 				matchBaseInfo: {},
@@ -230,6 +231,7 @@
 			}
 		},
 		onLoad(option) {
+			this.getSettings()
 			this.matchBaseInfo = JSON.parse(decodeURIComponent(option.matchBaseInfo));
 			console.log(this.matchBaseInfo);
 			this.rules = this.matchBaseInfo.matchRules
@@ -239,6 +241,10 @@
 			})
 		},
 		methods: {
+			async getSettings(){
+				let fn = uniCloud.importObject('settings')
+				this.showVideo = await fn.getSettings()
+			},
 			dateFormat(time, flag) {
 				let date = new Date(time);
 				let year = date.getFullYear();

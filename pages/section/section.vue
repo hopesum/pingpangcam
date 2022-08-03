@@ -46,7 +46,7 @@
 					</view>
 				</view>
 			</view>
-			<view>
+			<view v-if="showVideo">
 				<uni-grid :column="3" :show-border="true" :square="true">
 					<uni-grid-item v-for="(video ,index1) in item.videoList" :index="index1" :key="index1">
 						<view v-if="video" class="grid-item-box">
@@ -58,7 +58,7 @@
 			</view>
 			<template v-slot:actions>
 				<view class="btn-container">
-					<button size="mini" class="uni-button btn" type="primary" @click="uploadVideo(item)">上传视频</button>
+					<button v-if="showVideo" size="mini" class="uni-button btn" type="primary" @click="uploadVideo(item)">上传视频</button>
 					<button v-if="(hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser)"
 						class="uni-button btn" size="mini" type="warn" @click.stop="deleteSection(item)">删除</button>
 				</view>
@@ -99,6 +99,7 @@
 	export default {
 		data() {
 			return {
+				showVideo:false,
 				matchId: '',
 				currentUser: {},
 				sectionList: [],
@@ -125,6 +126,7 @@
 			// }
 		},
 		onLoad(params) {
+			this.getSettings()
 			this.matchId = params.matchId || ''
 			this.matchName = params.matchName || ''
 			if (this.matchName) {
@@ -140,9 +142,14 @@
 			} else {
 				await this.initialize()
 			}
+			this.getSettings()
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			async	getSettings(){
+				let fn = uniCloud.importObject('settings')
+				this.showVideo = await fn.getSettings()
+			},
 			handleVideo(video) {
 				uni.navigateTo({
 					url: '/pages/section/play?video=' + video
