@@ -1,0 +1,7 @@
+{
+  "name": "exchange",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

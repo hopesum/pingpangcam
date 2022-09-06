@@ -17,7 +17,7 @@
 			currentAddress: {{currentAddress}},
 		</view> -->
 		<view class="divFooter">
-			<view class="distance">{{distance}}</view>
+			<view class="distance">{{(distance*100000).toFixed(2)}}米</view>
 			<button class="uni-button cus-btn " type="warn" plain @click="handleSignCalendar">出勤日历</button>
 			<button class="uni-button cus-btn " type="primary" @click="handleSignRecord">所有记录</button>
 			<button class="uni-button cus-btn " type="warn" @click="handleSendAddress">位置通知</button>
@@ -34,7 +34,7 @@
 					</view>
 					<uni-easyinput v-model="customMsg" placeholder="" />
 					<view class="desc">
-						打卡成功，是否通知各位？
+						更新打卡成功，是否通知各位？
 					</view>
 				</view>
 			</uni-popup-dialog>
@@ -60,6 +60,7 @@
 	export default {
 		data() {
 			return {
+				baseSuperIntegral: 10,
 				lastSign: null,
 				timer: null,
 				time: new Date(),
@@ -106,7 +107,7 @@
 			}
 		},
 		onLoad() {
-			console.log(this.hasLogin,'???')
+			console.log(this.hasLogin, '???')
 			this.getRules()
 			this.getLocation()
 			this.getSignRecord()
@@ -230,7 +231,8 @@
 							params: {
 								_id: that.ruleId,
 								latitude: that.latitude,
-								longitude: that.longitude,
+								longitude: that.longitude,								
+								address: that.address,
 								distanceRule: that.distanceRule
 							}
 						},
@@ -250,6 +252,7 @@
 								latitude: that.latitude,
 								longitude: that.longitude,
 								address: that.address,
+								distanceRule: that.distanceRule
 							}
 						},
 						success() {
@@ -260,10 +263,18 @@
 						}
 					})
 				}
+				let data = {
+					"touser": "@all",
+					"msgtype": "text",
+					"agentid": 1000003,
+					"text": {
+						"content": `打卡规则变动 \n\n打卡位置：${this.address}\n打卡距离：${this.distanceRule}`
+					},
+				}
+				this.sendQYWX(data)
 			},
 			handleSign() {
 				let that = this
-				console.log(this.userInfo);
 				if (!this.isCanSign) {
 					uni.showToast({
 						icon: 'none',
@@ -281,10 +292,7 @@
 					}
 				}
 				if (oprate === 'add') {
-					let signIntegral = Math.random(0, 1)
-					const signIntegralList = [0, 1, 2, 4, 5, 10, 20, 0, 0, 0];
-					console.log(signIntegralList[Math.floor(Math.random() * (signIntegralList.length + 1))])
-
+					uni.showLoading()
 					uniCloud.callFunction({
 						name: 'signRecord',
 						data: {
@@ -300,15 +308,25 @@
 							}
 						},
 						success() {
+							uni.hideLoading()
 							// uni.showToast({
 							// 	icon: 'none',
 							// 	title: '打卡成功'
 							// })
+							// 第一次打卡进入抽奖页
+							uni.navigateTo({
+								url: '/pages/sign/reward'
+							})
 							that.getSignRecord()
-							that.$refs.dialog.open()
+							that.confirm(false)
+							// that.$refs.dialog.open()
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				} else {
+					uni.showLoading()
 					uniCloud.callFunction({
 						name: 'signRecord',
 						data: {
@@ -329,14 +347,22 @@
 							// 	icon: 'none',
 							// 	title: '打卡成功'
 							// })
+							uni.hideLoading()
 							that.getSignRecord()
 							that.$refs.dialog.open()
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				}
 
 			},
-			handleSendAddress(){
+			handleSendAddress() {
+				// uni.navigateTo({
+				// 	url:'/pages/sign/reward'
+				// })
+				// return
 				let data = {
 					"touser": "@all",
 					"msgtype": "news",
@@ -344,20 +370,20 @@
 					"news": {
 						"articles": [{
 							"title": `${this.userInfo.nickname}位置通知`,
-							"description": `当前时间\n${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())}\n我目前的位置是\n${this.currentAddress}`,
+							"description": `当前时间\n${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())}\n我目前的位置是\n${this.currentAddress}\n距离打卡位置：${(this.distance*100000).toFixed(2)}米`,
 							"picurl": `${this.userInfo.avatar_file.url}`
 						}]
 					},
 				}
 				this.sendQYWX(data)
 			},
-			confirm() {
+			confirm(flag = true) {
 				let params = {
 					"msgtype": "markdown",
 					"markdown": {
 						"title": "打卡提醒",
-						"text": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${this.distance}\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`,
-						"content": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${this.distance}\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`
+						"text": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${(this.distance*100000).toFixed(2)}米\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`,
+						"content": `#### ${this.userInfo.nickname}打卡提醒 \n > 时间：${this.dateFormat(new Date(), true)}\n >经度：${this.currentLongitude}\n >纬度：${this.currentLatitude}\n >距离：${(this.distance*100000).toFixed(2)}米\n > ![screenshot](${this.userInfo.avatar_file.url})\n > ### ${this.customMsg} \n`
 					},
 					"at": {
 						"isAtAll": true
@@ -371,14 +397,14 @@
 					"news": {
 						"articles": [{
 							"title": `${this.userInfo.nickname}打卡提醒`,
-							"description": `时间：${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())} \n经度：${this.currentLongitude} \n纬度：${this.currentLatitude} \n距离：${this.distance}\n位置：${this.currentAddress} \n${this.customMsg}`,
+							"description": `时间：${this.dateFormat(new Date(), true)} ${this.dateFormat(new Date())} \n经度：${this.currentLongitude} \n纬度：${this.currentLatitude} \n距离：${(this.distance*100000).toFixed(2)}米\n位置：${this.currentAddress} \n${this.customMsg}`,
 							"picurl": `${this.userInfo.avatar_file.url}`
 						}]
 					},
 				}
-				this.sendQYWX(data)
+				this.sendQYWX(data, flag)
 			},
-			sendQYWX(params) {
+			sendQYWX(params, flag) {
 				let that = this
 				uniCloud.callFunction({
 					name: 'xcxcontact',
@@ -387,8 +413,10 @@
 						params: params
 					},
 					success() {
-						that.$refs.dialog.close()
-						that.$refs.medialog.open()
+						if (flag) {
+							that.$refs.dialog.close()
+							that.$refs.medialog.open()
+						}
 					}
 				})
 			},

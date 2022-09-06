@@ -2,7 +2,7 @@
 	"pages": [{
 			"path": "pages/match/match",
 			"style": {
-				"navigationBarTitleText": "赛事大厅",
+				"navigationBarTitleText": "对抗赛事",
 				"enablePullDownRefresh": true
 			}
 		}, {
@@ -213,6 +213,12 @@
 				"navigationBarTitleText": "打球打卡",
 				"enablePullDownRefresh": true
 			}
+		},{
+			"path": "pages/sign/calendar",
+			"style": {
+				"navigationBarTitleText": "出勤日历",
+				"enablePullDownRefresh": true
+			}
 		}, {
 			"path": "pages/sign/record",
 			"style": {
@@ -226,8 +232,25 @@
 				"enablePullDownRefresh": true
 			}
 
-		}
-	],
+		}, {
+			"path": "pages/sign/reward",
+			"style": {
+				"navigationBarTitleText": "积分抽奖",
+				"enablePullDownRefresh": false
+			}
+		}, {
+			"path": "pages/sign/board",
+			"style": {
+				"navigationBarTitleText": "出勤排行",
+				"enablePullDownRefresh": false
+			}
+		}, {
+			"path": "pages/mall/home",
+			"style": {
+				"navigationBarTitleText": "积分商城",
+				"enablePullDownRefresh": false
+			}
+		}],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "国家乒乓球队正品群",

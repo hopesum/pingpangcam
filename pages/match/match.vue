@@ -1,8 +1,10 @@
 <template>
 	<view class="divContainer">
-		<swiper v-if="matchList.length&&bannerList.length" class="swiper" circular :indicator-dots="true"
+		<!-- <uni-nav-bar height="120rpx" title=" " backgroundColor="#57b65a"></uni-nav-bar> -->
+		<uni-notice-bar scrollable showIcon :speed="30" :text="notice"></uni-notice-bar>
+		<swiper class="swiper" circular :indicator-dots="false"
 			:autoplay="true" :interval="4000" :duration="500">
-			<swiper-item class="swiper-item" v-for="(item,index) in bannerList" :key="index" @click="handleBanner">
+			<swiper-item class="swiper-item" v-for="(item,index) in bannerList" :key="index">
 				<view :class="['user-container']">
 					<view class="user-left">
 						<image class="banner-img" :src="item.avatar" mode="aspectFill" :draggable="false"></image>
@@ -33,26 +35,55 @@
 					</view>
 				</view>
 			</swiper-item>
-			<view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view>
+			<!-- <view class="rain" :style="[rain(rainIndex)]" v-for="rainIndex in rainNum" :key="rainIndex"></view> -->
 		</swiper>
-		<view class="board-btn" @click="handleBoard">排行榜</view>
-		<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name" :extra="dateFormat(match.createTime)"
-			:cover="match.image||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
-			@click="handleMatchDetail(match)">
-			<view class="title">
-				<view class="name">
-					<text class="desc">{{match.desc}}</text>
-				</view>
+		<view class="menu-list">
+			<view class="menu-item" v-if="hasLogin&&uniIDHasRole('admin')" @click="fabClick">
+				<uni-icons color="gold" type="medal-filled" size="30"></uni-icons>
+				<text>添加赛事</text>
 			</view>
-			<template v-slot:actions>
-				<view v-if="hasLogin&&uniIDHasRole('admin')" class="btn-container">
-					<button class="uni-button btn" size="mini" type="primary" @click.stop="editMatch(match)">编辑</button>
-					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteMatch(match)">删除</button>
+			<view class="menu-item" @click="handleBoard">
+				<uni-icons color="#e61f49" type="vip-filled" size="30"></uni-icons>
+				<text>积分榜单</text>
+			</view>
+			<view class="menu-item" @click="handleSection">
+				<uni-icons color="#4eb0fa" type="staff-filled" size="30"></uni-icons>
+				<text>对战记录</text>
+			</view>
+			<view class="menu-item" @click="handleMall">
+				<uni-icons color="#ff7a45" type="shop-filled" size="30"></uni-icons>
+				<text>积分商城</text>
+			</view>
+			<view class="menu-item" @click="hanldeSignBoard">
+				<uni-icons color="#16c4af" type="calendar-filled" size="30"></uni-icons>
+				<text>出勤排行</text>
+			</view>
+		</view>
+		<view class="divContent">
+			<!-- <uni-section title="比赛列表" type="line" class="match-list"></uni-section> -->
+			<!-- <view class="board-btn" @click="handleBoard">排行榜</view> -->
+			<uni-card class="card" v-for="(match,index) in matchList" :key="index" :title="match.name"
+				:extra="dateFormat(match.createTime)" @click="handleMatchDetail(match)">
+				<view class="title">
+					<view class="name">
+						<text class="desc">{{match.desc}}</text>
+					</view>
 				</view>
-			</template>
-		</uni-card>
-		<uni-fab v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom"
-			@fabClick="fabClick" />
+				<image width="100%" mode="aspectFill"
+					:src="match.image||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'">
+				</image>
+				<template v-slot:actions>
+					<view v-if="hasLogin&&uniIDHasRole('admin')" class="btn-container">
+						<button class="uni-button btn" size="mini" type="primary"
+							@click.stop="editMatch(match)">编辑</button>
+						<button class="uni-button btn" size="mini" type="warn"
+							@click.stop="deleteMatch(match)">删除</button>
+					</view>
+				</template>
+			</uni-card>
+		</view>
+		<!-- <uni-fab v-if="hasLogin&&uniIDHasRole('admin')" ref="fab" horizontal="right" vertical="bottom"
+			@fabClick="fabClick" /> -->
 		<uni-popup ref="popup" type="bottom" background-color="#fff">
 			<view class="form-container">
 				<view class="form-header">
@@ -117,6 +148,7 @@
 	export default {
 		data() {
 			return {
+				notice: '打卡奖励开启，每日只能获取一次奖励积分，最高可随机获取40积分，获取的积分将计入总积分，快来打卡参与吧！',
 				rainNum: 40,
 				matchList: [],
 				bannerList: [],
@@ -147,6 +179,7 @@
 		async onLoad() {
 			await this.checkToken()
 			this.getMatchList()
+			this.getSettings()
 		},
 		async onPullDownRefresh() {
 			await this.checkToken()
@@ -154,6 +187,10 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			async getSettings() {
+				let fn = uniCloud.importObject('settings')
+				this.notice = await fn.getNotice()
+			},
 			dateFormat(time, flag) {
 				let date = new Date(time);
 				let year = date.getFullYear();
@@ -168,9 +205,14 @@
 				// return year + "-" + month + "-" + day;
 				return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
 			},
-			handleBoard(){
+			handleBoard() {
 				uni.navigateTo({
-					url:'/pages/match/board'
+					url: '/pages/match/board'
+				})
+			},
+			handleSection(){
+				uni.navigateTo({
+					url:'/pages/section/section'
 				})
 			},
 			async checkToken() {
@@ -192,8 +234,11 @@
 			},
 			handleBanner() {
 				uni.navigateTo({
-					url: `/pages/match/board?matchId=${this.matchList[0]._id}&matchName=${this.matchList[0].name}`
+					url: '/pages/match/board'
 				})
+				// uni.navigateTo({
+				// 	url: `/pages/match/board?matchId=${this.matchList[0]._id}&matchName=${this.matchList[0].name}`
+				// })
 			},
 			uploadAvatarImg(res) {
 				const crop = {
@@ -269,25 +314,24 @@
 				await uniCloud.callFunction({
 					name: 'section',
 					data: {
-						action: 'getSectionList',
+						// action: 'getSectionList',
+						action: 'getAllSectionList',
 						params: {
 							matchId
 						}
 					},
 					success(res) {
 						let sectionList = res.result.data
-						console.log(res.result.data);
-						that.matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
+						// let matchBaseScore = Number(res.result.data[0]?.matchBaseScore)
 						let winnerList = sectionList.map(el => el.winner)
 						let loserList = sectionList.map(el => el.loser)
 						let users = {}
-
 						winnerList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].winMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win * 1
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail * 1
-								users[el.userId].integral += el.integral * 1
+								users[el.userId].win += el.tag == '补分' ? 0 : Number(el.win)
+								users[el.userId].fail += el.tag == '补分' ? 0 : Number(el.fail)
+								users[el.userId].integral += Number(el.integral)
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -297,18 +341,18 @@
 									score: el.score,
 									winMatch: 1,
 									failMatch: 0,
-									win: el.tag == '补分' ? 0 : el.win * 1,
-									fail: el.tag == '补分' ? 0 : el.fail * 1,
-									integral: el.integral * 1
+									win: el.tag == '补分' ? 0 : Number(el.win),
+									fail: el.tag == '补分' ? 0 : Number(el.fail),
+									integral: Number(el.integral)
 								}
 							}
 						})
 						loserList.forEach(el => {
 							if (users[el.userId]) {
 								users[el.userId].failMatch += el.tag == '补分' ? 0 : 1
-								users[el.userId].win += el.tag == '补分' ? 0 : el.win * 1
-								users[el.userId].fail += el.tag == '补分' ? 0 : el.fail * 1
-								users[el.userId].integral += el.integral * 1
+								users[el.userId].win += el.tag == '补分' ? 0 : Number(el.win)
+								users[el.userId].fail += el.tag == '补分' ? 0 : Number(el.fail)
+								users[el.userId].integral += Number(el.integral)
 							} else {
 								users[el.userId] = {
 									userId: el.userId,
@@ -318,15 +362,13 @@
 									score: el.score,
 									winMatch: 0,
 									failMatch: 1,
-									win: el.tag == '补分' ? 0 : el.win * 1,
-									fail: el.tag == '补分' ? 0 : el.fail * 1,
-									integral: el.integral * 1
+									win: el.tag == '补分' ? 0 : Number(el.win),
+									fail: el.tag == '补分' ? 0 : Number(el.fail),
+									integral: Number(el.integral)
 								}
 							}
 						})
-						if (!Object.keys(users).length) {
-							return []
-						}
+
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {
@@ -376,22 +418,35 @@
 							});
 							users[userId].fight = fight
 						});
+						// that.users = users
+						// that.$set(that, 'users', users)
+						// console.log(that.users, '*******');
+						if (!Object.keys(users).length) {
+							return []
+						}
+						console.log(users, '12456');
 						let tempList = Object.keys(users).map(key => users[key])
+						console.log('tempList', tempList);
+						let bufenIndex = tempList.findIndex(el => el.nickname === '补分选手')
+						if (bufenIndex !== -1) {
+							tempList.splice(bufenIndex, 1)
+						}
 						tempList = tempList.map(user => {
 							return {
 								avatar: user.avatar,
 								nickname: user.nickname,
 								integral: user.integral,
-								rate: Math.ceil(((user.winMatch || 0) / ((user.winMatch || 0) + (user
-										.failMatch || 0))) *
+								rate: Math.ceil(((user.winMatch || 0) / ((user.winMatch || 0) + (user.failMatch || 0))) *
 									100),
 								KD: Number((user.win || 0) / (user.fail || 1)).toFixed(2),
 								winMatch: user.winMatch,
 								failMatch: user.failMatch,
 								win: user.win,
-								fail: user.fail
+								fail: user.fail,
+								fight: user.fight
 							}
 						})
+						
 						let integralFirst = tempList.sort((a, b) => {
 							return b.integral - a.integral
 						})[0]
@@ -491,6 +546,16 @@
 				uni.navigateTo({
 					url: `/pages/match/detail?matchBaseInfo=${encodeURIComponent(JSON.stringify(match))}`
 				})
+			},
+			handleMall(){
+				uni.navigateTo({
+					url: '/pages/mall/home'
+				})
+			},
+			hanldeSignBoard(){
+				uni.navigateTo({
+					url: '/pages/sign/board'
+				})
 			}
 		}
 	}
@@ -506,6 +571,16 @@
 
 		50% {
 			transform: scale(0.98);
+		}
+	}
+
+	@keyframes move {
+		from {
+			transform: rotateZ(360deg);
+		}
+
+		to {
+			transform: rotateZ(0deg);
 		}
 	}
 
@@ -528,12 +603,17 @@
 
 	.divContainer {
 		font-size: 16px;
-		// background: #f5f5f5;
+		// background-color: #57b65a;
+	}
+
+	.divContent {
+		// background: -webkit-linear-gradient(right, #409EFF, transparent, transparent, transparent, transparent, transparent, transparent, #F56C6C);
 	}
 
 	.card {
 		position: relative;
 
+		// margin-top: 10px;
 		.fire {
 			position: absolute;
 			top: 20px;
@@ -608,16 +688,42 @@
 			position: relative;
 
 			.banner-img {
+				padding: 4px;
 				width: 100%;
 				height: 100%;
-				border: 2px solid #ffd700;
+				// border: 2px solid #ffd700;
 				box-sizing: border-box;
 				margin: 8px;
-				box-shadow: 2px 2px 6px #666;
+				// box-shadow: 2px 2px 6px #666;
 				border-radius: 4px;
 				position: relative;
 				z-index: 2;
+
 				// animation: bannerImageScale 4s infinite;
+				&::after {
+					content: '';
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					width: 100%;
+					height: 100%;
+					background: linear-gradient(180deg, #409EFF, #F56C6C);
+					animation: move 3s linear infinite;
+					transform-origin: 0 0;
+					z-index: -2;
+				}
+
+				&::before {
+					content: '';
+					width: calc(100% - 4px);
+					height: calc(100% - 4px);
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					transform: translate(-50%, -50%);
+					background-color: #fff;
+					z-index: -1;
+				}
 			}
 		}
 
@@ -644,9 +750,9 @@
 	.title-name {
 		// color: #ffd700;
 		animation: bannerImageScale 4s infinite;
-		color: #fff;
+		color: #ffd700;
 		font-size: 35px;
-		text-shadow: 2px 2px 4px #666;
+		text-shadow: 2px 2px 4px #fff;
 	}
 
 	.user-info {
@@ -666,13 +772,14 @@
 	}
 
 	.text {
-		color: #ffffff;
+		margin-top: 8px;
+		color: #333;
 		// text-shadow: 2px 2px #F56C6C;
-		font-size: 20px;
-		background: linear-gradient(145deg, #409EFF, #F56C6C);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		text-shadow: 2px 2px 2px #aaa;
+		font-size: 30px;
+		// background: linear-gradient(145deg, #409EFF, #F56C6C);
+		// -webkit-background-clip: text;
+		// -webkit-text-fill-color: transparent;
+		// text-shadow: 2px 2px 2px #aaa;
 		// animation: textShake 300ms infinite ;
 	}
 
@@ -733,7 +840,8 @@
 			transform: translateY(300px);
 		}
 	}
-	.board-btn{
+
+	.board-btn {
 		position: fixed;
 		bottom: 90px;
 		right: 16px;
@@ -743,11 +851,25 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		font-size: 14px;
-		background: #007aff;
-		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+		font-size: 12px;
+		background: #57b65a;
+		box-shadow: 2px 2px 10px rgba(#387539, 1);
 		border-radius: 50%;
 		color: #ffffff;
-		font-weight: 600;
+		// font-weight: 600;
+	}
+	.menu-list{
+		display: flex;
+		justify-content: space-evenly;
+		align-items: center;
+		padding: 16px 0;
+		color: #333;
+		.menu-item{
+			font-size: 24rpx;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			align-items: center;
+		}
 	}
 </style>

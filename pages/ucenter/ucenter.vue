@@ -84,18 +84,11 @@
 							"icon": "compose"
 						},
 						// #endif
-						{
-							"title": this.$t('mine.signIn'),
-							"event": 'signIn',
-							"icon": "compose"
-						},
-						// // #ifdef APP-PLUS
 						// {
-						// 	"title": this.$t('mine.toEvaluate'),
-						// 	"event": 'gotoMarket',
-						// 	"icon": "hand-thumbsup"
+						// 	"title": this.$t('mine.signIn'),
+						// 	"event": 'signIn',
+						// 	"icon": "compose"
 						// },
-						// //#endif
 						// {
 						// 	"title":this.$t('mine.readArticles'),
 						// 	"to": '/pages/ucenter/read-news-log/read-news-log',
@@ -108,11 +101,17 @@
 							"icon": "person"
 						},
 						{
-							"title": '签到积分',
+							"title": "积分商城",
 							"to": '',
-							"event": 'getScore',
-							"icon": "paperplane"
+							"event": 'gotoMarket',
+							"icon": "shop"
 						},
+						// {
+						// 	"title": '签到积分',
+						// 	"to": '',
+						// 	"event": 'getScore',
+						// 	"icon": "paperplane"
+						// },
 						{
 							"title": '对战记录',
 							"to": '/pages/section/section',
@@ -190,10 +189,10 @@
 			}),
 			needAdmin(item) {
 				const needAdminList = ['用户管理']
-				if(needAdminList.indexOf(item.title)!==-1){
-					if(this.hasLogin&&this.uniIDHasRole('admin')){
+				if (needAdminList.indexOf(item.title) !== -1) {
+					if (this.hasLogin && this.uniIDHasRole('admin')) {
 						return true
-					}else{
+					} else {
 						return false
 					}
 				}
@@ -201,7 +200,7 @@
 			},
 			getPerson() {
 				uni.navigateTo({
-					url:'/pages/user/user'
+					url: '/pages/user/user'
 				})
 			},
 			toSettings() {
@@ -251,21 +250,28 @@
 			 * 去应用市场评分
 			 */
 			gotoMarket() {
-				// #ifdef APP-PLUS
-				if (uni.getSystemInfoSync().platform == "ios") {
-					// 这里填写appstore应用id
-					let appstoreid = this.appConfig.marketId.ios; // 'id1417078253';
-					plus.runtime.openURL("itms-apps://" + 'itunes.apple.com/cn/app/wechat/' + appstoreid + '?mt=8');
-				}
-				if (uni.getSystemInfoSync().platform == "android") {
-					var Uri = plus.android.importClass("android.net.Uri");
-					var uri = Uri.parse("market://details?id=" + this.appConfig.marketId.android);
-					var Intent = plus.android.importClass('android.content.Intent');
-					var intent = new Intent(Intent.ACTION_VIEW, uri);
-					var main = plus.android.runtimeMainActivity();
-					main.startActivity(intent);
-				}
-				// #endif
+				// // #ifdef APP-PLUS
+				// if (uni.getSystemInfoSync().platform == "ios") {
+				// 	// 这里填写appstore应用id
+				// 	let appstoreid = this.appConfig.marketId.ios; // 'id1417078253';
+				// 	plus.runtime.openURL("itms-apps://" + 'itunes.apple.com/cn/app/wechat/' + appstoreid + '?mt=8');
+				// }
+				// if (uni.getSystemInfoSync().platform == "android") {
+				// 	var Uri = plus.android.importClass("android.net.Uri");
+				// 	var uri = Uri.parse("market://details?id=" + this.appConfig.marketId.android);
+				// 	var Intent = plus.android.importClass('android.content.Intent');
+				// 	var intent = new Intent(Intent.ACTION_VIEW, uri);
+				// 	var main = plus.android.runtimeMainActivity();
+				// 	main.startActivity(intent);
+				// }
+				// // #endif
+				// uni.showToast({
+				// 	title:'暂未开放',
+				// 	icon:'error'
+				// })
+				uni.navigateTo({
+					url: '/pages/mall/home'
+				})
 			},
 			/**
 			 * 获取积分信息

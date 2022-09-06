@@ -3,8 +3,7 @@
 		<!-- 顶部文字 -->
 		<!-- 登录框 (选择手机号所属国家和地区需要另行实现) -->
 		<uni-forms ref="form" :value="formData" >
-			<uni-forms-item name="phone">
-				<!-- focus规则如果上一页携带来“手机号码”数据就focus验证码输入框，否则focus手机号码输入框 -->
+			<!-- <uni-forms-item name="phone">
 				<uni-easyinput :disabled="lock" :focus="formData.phone.length!=11" type="number" class="easyinput" :inputBorder="false"
 					v-model="formData.phone" maxlength="11" :placeholder="$t('common.phonePlaceholder')"></uni-easyinput>
 			</uni-forms-item>
@@ -15,7 +14,7 @@
 						<uni-send-sms-code ref="shortCode" :phone="formData.phone"></uni-send-sms-code>
 					</template>
 				</uni-easyinput>
-			</uni-forms-item>
+			</uni-forms-item> -->
 			<uni-forms-item name="pwd">
 				<uni-easyinput type="password" class="easyinput" :inputBorder="false" v-model="formData.pwd"
 					:placeholder="$t('common.newPasswordPlaceholder')"></uni-easyinput>

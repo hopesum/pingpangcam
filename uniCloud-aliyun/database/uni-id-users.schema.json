@@ -2,7 +2,8 @@
 	"bsonType": "object",
 	"permission":{
 		"read":true,
-		"update":"doc._id == auth.uid"
+		"update":"doc._id == auth.uid",
+		"delete":true
 	},
 	"required": [],
 	"properties": {

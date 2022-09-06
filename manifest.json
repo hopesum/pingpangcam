@@ -45,7 +45,7 @@
         "appid" : "wxa1f6c6522833a91b",
         "setting" : {
             "urlCheck" : false,
-            "minified" : false
+            "minified" : true
         },
         "usingComponents" : true,
         "permission" : {

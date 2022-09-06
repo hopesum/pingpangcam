@@ -8,7 +8,7 @@
 					<button class="uni-button btn" size="mini" type="default"
 						@click.stop="cancleAdmin(user)">取消管理</button>
 					<button class="uni-button btn" size="mini" type="primary" @click.stop="setAdmin(user)">设为管理</button>
-					<!-- <button class="uni-button btn" size="mini" type="warn" @click.stop="deleteUser(user)">删除</button> -->
+					<button class="uni-button btn" size="mini" type="warn" @click.stop="deleteUser(user)">删除</button>
 				</view>
 			</template>
 		</uni-card>
@@ -74,7 +74,8 @@
 					}
 				})
 			},
-			deleteAdmin(user) {//TODO:unicloud bug , _vm.deleteUser is not a function，无法删除
+			deleteUser(user) {//TODO:unicloud bug , _vm.deleteUser is not a function，无法删除
+				let that = this
 				uniCloud.callFunction({
 					name: 'user',
 					data: {

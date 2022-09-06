@@ -4,10 +4,11 @@
 			:title="dateFormat(item.createTime)">
 			<view>经度：{{item.latitude}}</view>
 			<view>纬度：{{item.longitude}}</view>
-			<view>距离：{{item.distance}}</view>
+			<view>距离：{{(item.distance*100000).toFixed(2)}}米</view>
 			<view>地点：{{item.address}}</view>
 		</uni-card>
-		<uni-fab  ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" />
+		<!-- <uni-fab  ref="fab" horizontal="right" vertical="bottom" @fabClick="fabClick" /> -->
+		<view class="board-btn" @click="fabClick">出勤日历</view>
 	</view>
 </template>
 
@@ -97,5 +98,22 @@
 <style lang="scss" scoped>
 	.time-container {
 		margin-top: 20px;
+	}
+	.board-btn {
+		position: fixed;
+		bottom: 90px;
+		right: 16px;
+		z-index: 1;
+		width: 52px;
+		height: 52px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 12px;
+		background: #57b65a;
+		box-shadow: 2px 2px 10px rgba(#387539, 1);
+		border-radius: 50%;
+		color: #ffffff;
+		// font-weight: 600;
 	}
 </style>

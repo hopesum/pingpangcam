@@ -1,5 +1,5 @@
 <template>
-	<view class="divContaienr">
+	<view class="divContainer">
 		<view class="divContent">
 			<view class="title">
 				请选择对战双方
@@ -123,7 +123,7 @@
 </script>
 
 <style lang="scss" scoped>
-	.divContaienr {
+	.divContainer {
 		position: relative;
 		padding-bottom: 60px;
 

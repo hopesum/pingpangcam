@@ -10,7 +10,55 @@
 		<view v-if="!matchId" class="board-btn" @click="handleBoard">排行榜</view>
 		<uni-card v-for="(item,index) in sectionList" :extra="item.createUserName" :key="index"
 			:title="dateFormat(item.createTime)">
-			<view class="battle-user">
+			<view v-if="item.type&&item.type==='SIGN'" class="battle-user">
+				<view class="left sign">
+					<view class="sign-text">
+						奖
+					</view>
+					<view class="left">
+						<image class="avatar reward-avatar" lazy-load :src="item.winner.avatar" mode="aspectFill"
+							:draggable="false"></image>
+						<view>打卡奖励</view>
+					</view>
+					<view class="right">
+						<view class="name">
+							{{item.winner.nickname+(item.winner.realname?item.winner.realname:'')}}
+						</view>
+						<view class="integral">
+							奖励积分：{{item.winner.integral}}
+						</view>
+					</view>
+				</view>
+			</view>
+			<view v-else-if="item.type&&item.type==='EXCHANGE'" class="battle-user">
+				<view class="left sign exchange">
+					<view class="sign-text">
+						兑
+					</view>
+					<view class="exchange-watermark">
+						<text v-if="item.status==1">审核中</text>
+						<text v-else-if="item.status==2">已通过</text>
+						<text v-else>未知状态</text>
+					</view>
+					<view class="left">
+						<image class="avatar reward-avatar" lazy-load :src="item.winner.avatar" mode="aspectFill"
+							:draggable="false"></image>
+						<view>兑换奖励</view>
+					</view>
+					<view class="right exchange-right">
+						<view class="name">
+							{{item.winner.nickname+(item.winner.realname?item.winner.realname:'')}}
+						</view>
+						<view class="integral">
+							扣除积分：{{item.winner.integral}}
+						</view>
+						<view class="integral">
+							兑换商品：{{item.winner.good.title}}
+						</view>
+					</view>
+				</view>
+			</view>
+			<view v-else class="battle-user">
 				<view class="left">
 					<view class="">
 						<image class="avatar" lazy-load :src="item.winner.avatar" mode="aspectFill" :draggable="false">
@@ -58,8 +106,12 @@
 			</view>
 			<template v-slot:actions>
 				<view class="btn-container">
-					<button v-if="showVideo" size="mini" class="uni-button btn" type="primary" @click="uploadVideo(item)">上传视频</button>
-					<button v-if="(hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser)"
+					<button v-if="showVideo" size="mini" class="uni-button btn" type="primary"
+						@click="uploadVideo(item)">上传视频</button>
+					<button v-if="item.status==='1'&&(hasLogin&&uniIDHasRole('admin'))" size="mini" class="uni-button btn" type="primary"
+						@click="approve(item)">审核</button>
+					<button
+						v-if="((hasLogin&&uniIDHasRole('admin'))||(userInfo._id===item.createUser))&&(item.status!='2')"
 						class="uni-button btn" size="mini" type="warn" @click.stop="deleteSection(item)">删除</button>
 				</view>
 			</template>
@@ -73,11 +125,11 @@
 		</uni-popup>
 		<uni-popup ref="popup" type="bottom" background-color="#fff">
 			<view class="form-container">
-				<scroll-view scroll-y="true" class="scroll-Y">
-					<!-- <view class="form-header">
+				<!-- <view class="form-header">
 					<uni-icons type="closeempty" color="#409EFF" size="30" @click="handleClose"></uni-icons>
 					<uni-icons type="checkmarkempty" color="#67C23A" size="30" @click="handleAdd"></uni-icons>
 				</view> -->
+				<scroll-view scroll-y="true" class="scroll-Y">
 					<view v-if="userList.length">
 						<view class="user-dialog" v-for="(user,index) in userList" :key="index"
 							@click="handleSearchUser(user)">
@@ -99,7 +151,7 @@
 	export default {
 		data() {
 			return {
-				showVideo:false,
+				showVideo: false,
 				matchId: '',
 				currentUser: {},
 				sectionList: [],
@@ -146,7 +198,7 @@
 			uni.stopPullDownRefresh()
 		},
 		methods: {
-			async	getSettings(){
+			async getSettings() {
 				let fn = uniCloud.importObject('settings')
 				this.showVideo = await fn.getSettings()
 			},
@@ -177,7 +229,6 @@
 							section.videoList = []
 						}
 						section.videoList.push(video.fileID)
-						console.log(section)
 						uniCloud.callFunction({
 							name: 'section',
 							data: {
@@ -194,6 +245,37 @@
 						})
 					}
 				});
+			},
+			approve(section) {
+				let that = this
+				section.status = 2
+				uniCloud.callFunction({
+					name: 'section',
+					data: {
+						action: 'updateSection',
+						params: section
+					},
+					success(ress) {
+						uni.showToast({
+							icon: "none",
+							title: '审核成功'
+						})
+						that.initialize()
+						let data = {
+							"touser": "@all",
+							"msgtype": "news",
+							"agentid": 1000003,
+							"news": {
+								"articles": [{
+									"title": `${section.winner.nickname}兑换审核通知`,
+									"description": `当前时间\n${that.dateFormat(new Date())} \n${section.winner.nickname} !!!!!!!! \n消耗 ${section.winner.integral} 积分，申请兑换${section.winner.good.title}\n管理员审批通过，请联系管理员领取兑换奖品`,
+									"picurl": `${section.winner.good.url}`
+								}]
+							},
+						}
+						that.sendQYWX(data)
+					}
+				})
 			},
 			handleClose() {
 				this.$refs.popup.close()
@@ -239,6 +321,7 @@
 			},
 			initialize() {
 				let that = this
+				uni.showLoading()
 				if (this.matchId) {
 					uniCloud.callFunction({
 						name: 'section',
@@ -249,6 +332,7 @@
 							}
 						},
 						success(res) {
+							uni.hideLoading()
 							that.sectionList = res.result.data
 							res.result.data.forEach(el => {
 								let templistUserIds = that.userList.map(el => el.userId)
@@ -256,6 +340,9 @@
 									that.userList.push(el.winner || el.loser)
 								}
 							})
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				} else {
@@ -265,6 +352,7 @@
 							action: 'getAllSectionList'
 						},
 						success(res) {
+							uni.hideLoading()
 							that.sectionList = res.result.data
 							res.result.data.forEach(el => {
 								let templistUserIds = that.userList.map(el => el.userId)
@@ -272,6 +360,9 @@
 									that.userList.push(el.winner || el.loser)
 								}
 							})
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				}
@@ -291,6 +382,7 @@
 			},
 			getList() {
 				let that = this
+				uni.showLoading()
 				if (this.matchId) {
 					uniCloud.callFunction({
 						name: 'section',
@@ -302,7 +394,11 @@
 							}
 						},
 						success(res) {
+							uni.hideLoading()
 							that.sectionList = res.result.data
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				} else {
@@ -315,7 +411,11 @@
 							}
 						},
 						success(res) {
+							uni.hideLoading()
 							that.sectionList = res.result.data
+						},
+						fail() {
+							uni.hideLoading()
 						}
 					})
 				}
@@ -324,7 +424,22 @@
 				uni.navigateTo({
 					url: '/pages/match/board'
 				})
-			}
+			},
+			sendQYWX(params) {
+				let that = this
+				uniCloud.callFunction({
+					name: 'xcxcontact',
+					data: {
+						action: 'sendQYWX',
+						params: params
+					},
+					// success() {
+					// 	setTimeout(() => {
+					// 		uni.navigateBack()
+					// 	}, 5000)
+					// }
+				})
+			},
 		}
 	}
 </script>
@@ -346,6 +461,38 @@
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
+			}
+
+			.sign {
+				flex-direction: row;
+				padding: 20px 0;
+				border: 1px dotted #F56C6C;
+				background: rgba(#F56C6C, 0.1);
+				position: relative;
+
+				.sign-text {
+					position: absolute;
+					color: red;
+					top: 0;
+					right: 8px;
+					font-size: 12px;
+				}
+				.exchange-watermark{
+					position: absolute;
+					color: #F56C6C;
+					top: 8px;
+					left: 8px;
+					font-size: 12px;
+					transform: rotate(-30deg);
+				}
+
+				.left {
+					flex: 1;
+				}
+
+				.right {
+					flex: 1;
+				}
 			}
 
 			.middle {
@@ -387,6 +534,7 @@
 		height: 80vh;
 
 		.scroll-Y {
+			// height: calc(100% - 80px);
 			height: 100%;
 		}
 
@@ -470,20 +618,19 @@
 
 	.board-btn {
 		position: fixed;
-		bottom: 60px;
-		right: 30px;
+		bottom: 90px;
+		right: 16px;
 		z-index: 1;
 		width: 52px;
 		height: 52px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		font-size: 14px;
-		background: #007aff;
-		box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+		font-size: 12px;
+		background: #57b65a;
+		box-shadow: 2px 2px 10px rgba(#387539, 1);
 		border-radius: 50%;
 		color: #ffffff;
-		font-weight: 600;
 	}
 
 	.grid-item-box {
@@ -512,5 +659,62 @@
 
 	.mt-10 {
 		margin-top: 10px;
+	}
+
+	.reward-avatar {
+		padding: 4px;
+		width: 100%;
+		height: 100%;
+		// border: 2px solid #ffd700;
+		box-sizing: border-box;
+		// box-shadow: 2px 2px 6px #666;
+		border-radius: 4px;
+		position: relative;
+		z-index: 2;
+
+		// animation: bannerImageScale 4s infinite;
+		&::after {
+			content: '';
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(180deg, #409EFF, #F56C6C);
+			animation: move 3s linear infinite;
+			transform-origin: 0 0;
+			z-index: -2;
+		}
+
+		&::before {
+			content: '';
+			width: calc(100% - 4px);
+			height: calc(100% - 4px);
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			background-color: #fff;
+			z-index: -1;
+		}
+
+	}
+
+	.exchange {
+		background-color: rgba(#409EFF, 0.1) !important;
+	}
+
+	.exchange-right {
+		font-size: 12px;
+	}
+
+	@keyframes move {
+		from {
+			transform: rotateZ(360deg);
+		}
+
+		to {
+			transform: rotateZ(0deg);
+		}
 	}
 </style>
