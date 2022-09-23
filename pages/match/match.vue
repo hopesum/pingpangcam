@@ -186,6 +186,14 @@
 			await this.getMatchList()
 			uni.stopPullDownRefresh()
 		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length-1].$page.fullPath
+			return {
+				title: '赛事大厅',
+				path: fullPath
+			}
+		},
 		methods: {
 			async getSettings() {
 				let fn = uniCloud.importObject('settings')
@@ -339,7 +347,7 @@
 									avatar: el.avatar,
 									level: el.level,
 									score: el.score,
-									winMatch: 1,
+									winMatch: el.tag == '补分' ? 0 :1,
 									failMatch: 0,
 									win: el.tag == '补分' ? 0 : Number(el.win),
 									fail: el.tag == '补分' ? 0 : Number(el.fail),
@@ -361,7 +369,7 @@
 									level: el.level,
 									score: el.score,
 									winMatch: 0,
-									failMatch: 1,
+									failMatch: el.tag == '补分' ? 0 :1,
 									win: el.tag == '补分' ? 0 : Number(el.win),
 									fail: el.tag == '补分' ? 0 : Number(el.fail),
 									integral: Number(el.integral)
@@ -424,7 +432,6 @@
 						if (!Object.keys(users).length) {
 							return []
 						}
-						console.log(users, '12456');
 						let tempList = Object.keys(users).map(key => users[key])
 						console.log('tempList', tempList);
 						let bufenIndex = tempList.findIndex(el => el.nickname === '补分选手')
@@ -436,7 +443,7 @@
 								avatar: user.avatar,
 								nickname: user.nickname,
 								integral: user.integral,
-								rate: Math.ceil(((user.winMatch || 0) / ((user.winMatch || 0) + (user.failMatch || 0))) *
+								rate: Math.ceil(((user.winMatch || 0) / (((user.winMatch || 0) + (user.failMatch || 0))>0?((user.winMatch || 0) + (user.failMatch || 0)):1)) *
 									100),
 								KD: Number((user.win || 0) / (user.fail || 1)).toFixed(2),
 								winMatch: user.winMatch,

@@ -8,10 +8,10 @@
 			<view class="header">
 				<view :class="['user',index==0?'user-left':'user-right',(index%2!=0&&order)?'order-left':'order-right']"
 					v-for="(user,index) in matchBaseInfo.battleUser" :key="index">
-					<view class="step">
+					<!-- <view class="step">
 						<uni-segmented-control :current="currentLevel[index]" :values="levels" style-type="button"
 							active-color="#1aad19" @clickItem="onClickLevel($event,user)" />
-					</view>
+					</view> -->
 					<view class="user-content" @click="handleUserContent(user)">
 						<view class="user-score">
 							<text :class="index%2===0?'left':'right'">{{user.score||0}}</text>
@@ -22,6 +22,9 @@
 						:class="['user-header',(showBall==='left'&&index===0)?'left-ball':'',(showBall==='right'&&index===1)?'right-ball':'']"
 						@click="handleUserHeader(user)">
 						<image class="image" :src="user.avatar" mode="aspectFill" />
+						<view class="user-horse">
+							{{getUserHorse(user)}}
+						</view>
 						<view class="user-name">
 							<text class="text">{{user.nickname}}</text>
 							<input v-if="user.nickname==='补分选手'" type="text" v-model="user.realname" placeholder="真名"
@@ -47,7 +50,8 @@
 			</uni-grid>
 			<view class="btn-container">
 				<button class="uni-button" size="mini" type="warn" plain @click="changePosition">切换位置</button>
-				<button class="uni-button ml-10" size="mini" type="primary" @click="uploadVideo" v-if="showVideo">上传视频</button>
+				<button class="uni-button ml-10" size="mini" type="primary" @click="uploadVideo"
+					v-if="showVideo">上传视频</button>
 			</view>
 		</view>
 		<uni-card class="card-container" title="积分规则">
@@ -147,7 +151,7 @@
 	export default {
 		data() {
 			return {
-				showVideo:false,
+				showVideo: false,
 				setctionId: '',
 				showBall: '',
 				matchBaseInfo: {},
@@ -237,11 +241,21 @@
 			this.rules = this.matchBaseInfo.matchRules
 			console.log(this.rules);
 			this.matchBaseInfo.battleUser.forEach(user => {
-				this.$set(user, 'level', 0)
+				if (!user.horse) {
+					this.$set(user, 'horse', 1)
+				}
 			})
 		},
 		methods: {
-			async getSettings(){
+			getUserHorse(user) {
+				const statusMap = {
+					1: '上等马',
+					2: '中等马',
+					3: '下等马'
+				}
+				return statusMap[user.horse] || '野马'
+			},
+			async getSettings() {
 				let fn = uniCloud.importObject('settings')
 				this.showVideo = await fn.getSettings()
 			},
@@ -343,7 +357,7 @@
 				let loser = this.matchBaseInfo.battleUser.find(el => {
 					return el.userId !== this.winner.userId
 				})
-				if (this.winner.level <= loser.level) { //同级别或者是第一级别胜利
+				if (this.winner.horse <= loser.horse) { //同级别或者是第一级别胜利
 					this.winner.integral = this.rules.sameRuleWin
 					loser.integral = this.rules.sameRuleFail
 				} else {
@@ -567,7 +581,15 @@
 						align-items: center;
 						justify-content: center;
 						position: relative;
-						padding: 50px 0;
+						padding: 100px 0;
+
+						.user-horse {
+							color: #F56C6C;
+							position: absolute;
+							transform: rotate(-30deg);
+							left: 15px;
+							top: 70px;
+						}
 					}
 
 					.user-score {
@@ -579,8 +601,8 @@
 
 					.user-content {
 						background: #f5f5f5;
-						font-size: 20px;
-						padding: 40px 0;
+						font-size: 28px;
+						padding: 60px 0;
 						line-height: 40px;
 						position: relative;
 					}
@@ -660,8 +682,8 @@
 	.left-ball-empty {
 		display: none;
 		position: absolute;
-		right: 5px;
-		top: 5px;
+		right: 15px;
+		top: 50px;
 		width: 20px;
 		height: 20px;
 		border-radius: 50%;
@@ -773,7 +795,8 @@
 	.order-right {
 		order: 1;
 	}
-	.btn-container{
+
+	.btn-container {
 		text-align: right;
 		padding: 0 20px;
 	}

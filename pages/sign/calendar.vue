@@ -73,6 +73,14 @@
 			await this.getSignRecord()
 			uni.stopPullDownRefresh()
 		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length-1].$page.fullPath
+			return {
+				title: '考勤日历',
+				path: fullPath
+			}
+		},
 		methods: {
 			handleFilter() {
 				this.$refs.popup.open()

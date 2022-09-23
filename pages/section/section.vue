@@ -197,6 +197,14 @@
 			this.getSettings()
 			uni.stopPullDownRefresh()
 		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length-1].$page.fullPath
+			return {
+				title: '对战记录',
+				path: fullPath
+			}
+		},
 		methods: {
 			async getSettings() {
 				let fn = uniCloud.importObject('settings')

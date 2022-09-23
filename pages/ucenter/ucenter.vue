@@ -9,6 +9,10 @@
 				<text class="uer-name" v-if="hasLogin">{{userInfo.nickname||userInfo.username||userInfo.mobile}}</text>
 				<text class="uer-name" v-else>{{$t('mine.notLogged')}}</text>
 			</view>
+			<view class="logo-horse">
+				<text class="user-name" v-if="hasLogin">{{getUserHorse(userInfo)}}</text>
+				<text class="user-name" v-else></text>
+			</view>
 		</view>
 		<!-- <uni-grid class="grid" :column="4" :showBorder="false" :square="true">
 			<uni-grid-item class="item" v-for="(item,index) in gridList" @click.native="tapGrid(index)" :key="index">
@@ -187,6 +191,14 @@
 			...mapMutations({
 				setUserInfo: 'user/login'
 			}),
+			getUserHorse(user) {
+				const statusMap = {
+					1: '上等马',
+					2: '中等马',
+					3: '下等马'
+				}
+				return statusMap[user.horse] || '野马'
+			},
 			needAdmin(item) {
 				const needAdminList = ['用户管理']
 				if (needAdminList.indexOf(item.title) !== -1) {
@@ -422,6 +434,18 @@
 		align-items: center;
 		justify-content: space-between;
 		flex-direction: row;
+	}
+	.logo-horse{
+		flex: 1;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: row;
+		color: #DD524D;
+		font-size: 12px;
+		.user-name {
+			font-size: 24rpx;
+			color: #f8f8f8;
+		}
 	}
 
 	.uer-name {

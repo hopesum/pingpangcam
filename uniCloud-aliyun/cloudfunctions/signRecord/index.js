@@ -35,6 +35,17 @@ exports.main = async (event, context) => {
 			}
 			res.data = res2
 			break
+		case 'getSignMonthList':
+			let res4 = []
+			for (let i = 0; i < pageTotalNum; i++) {
+				let list = await collection.where({
+					createTime: db.command.and(db.command.gte(params.startTime), db.command.lte(params
+						.endTime))
+				}).skip(i * pageSize).get()
+				res4 = [...res4, ...list.data]
+			}
+			res.data = res4
+			break
 		case 'deleteSignRecord':
 			res = await collection.doc(params._id).remove()
 			break

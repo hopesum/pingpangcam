@@ -193,9 +193,7 @@
 				if (!Object.keys(this.users).length) {
 					return []
 				}
-				console.log(this.users, '12456');
 				let tempList = Object.keys(this.users).map(key => this.users[key])
-				console.log('tempList', tempList);
 				let bufenIndex = tempList.findIndex(el => el.nickname === '补分选手')
 				if (bufenIndex !== -1) {
 					tempList.splice(bufenIndex, 1)
@@ -205,7 +203,8 @@
 						avatar: user.avatar,
 						nickname: user.nickname,
 						integral: user.integral,
-						rate: Math.ceil(((user.winMatch || 0) / ((user.winMatch || 0) + (user.failMatch || 0))) *
+						rate: Math.ceil(((user.winMatch || 0) / (((user.winMatch || 0) + (user.failMatch || 0)) >
+								0 ? ((user.winMatch || 0) + (user.failMatch || 0)) : 1)) *
 							100),
 						KD: Number((user.win || 0) / (user.fail || 1)).toFixed(2),
 						winMatch: user.winMatch,
@@ -245,6 +244,14 @@
 					default:
 						break;
 				}
+			}
+		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length-1].$page.fullPath
+			return {
+				title: '排行榜',
+				path: fullPath
 			}
 		},
 		onLoad(params) {
@@ -367,7 +374,7 @@
 									avatar: el.avatar,
 									level: el.level,
 									score: el.score,
-									winMatch: 1,
+									winMatch: el.tag == '补分' ? 0 : 1,
 									failMatch: 0,
 									win: el.tag == '补分' ? 0 : Number(el.win),
 									fail: el.tag == '补分' ? 0 : Number(el.fail),
@@ -389,14 +396,14 @@
 									level: el.level,
 									score: el.score,
 									winMatch: 0,
-									failMatch: 1,
+									failMatch: el.tag == '补分' ? 0 : 1,
 									win: el.tag == '补分' ? 0 : Number(el.win),
 									fail: el.tag == '补分' ? 0 : Number(el.fail),
 									integral: Number(el.integral)
 								}
 							}
 						})
-						
+
 						Object.keys(users).forEach((userId) => {
 							let fight = {};
 							res.result.data.forEach((el) => {

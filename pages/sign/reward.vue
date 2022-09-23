@@ -129,6 +129,9 @@
 		mounted() {
 			this.getSettings()
 		},
+		onLoad() {
+			this.getSettings()
+		},
 		methods: {
 			async getSettings() {
 				let fn = uniCloud.importObject('settings')
@@ -158,13 +161,13 @@
 				const postData = {
 					type: 'SIGN',
 					createTime: new Date(),
-					createUser: this.userInfo._id,
+					createUser: this.userInfo._id||'62964b049b54e30001fbe69c',
 					matchId: '',
 					matchBaseScore: 0,
 					winner: {
 						win: 0,
-						userId: this.userInfo._id,
-						nickname: this.userInfo.nickname,
+						userId: this.userInfo._id||'62964b049b54e30001fbe69c',
+						nickname: this.userInfo.nickname||'新人来啦',
 						avatar: this.userInfo.avatar_file.url,
 						tag: '补分',
 						integral: item.integral

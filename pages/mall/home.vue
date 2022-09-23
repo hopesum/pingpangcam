@@ -55,6 +55,14 @@
 			this.getSettings()
 			this.getScore()
 		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length-1].$page.fullPath
+			return {
+				title: '积分商城',
+				path: fullPath
+			}
+		},
 		methods: {
 			getScore() {
 				let that = this

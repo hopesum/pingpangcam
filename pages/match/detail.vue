@@ -6,7 +6,7 @@
 			</view>
 			<uni-grid :column="3" :show-border="true" :square="true" @change="change">
 				<uni-grid-item v-for="(item ,index) in userList" :index="index" :key="index">
-					<view class="grid-item-box">
+					<view :class="{'grid-item-box':true,'limit':item.matchTime>=limitTime}">
 						<image class="image"
 							:src="item.avatar||item.avatar_file.url||'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'"
 							mode="aspectFill" />
@@ -35,7 +35,9 @@
 				matchName: '',
 				matchBaseScore: 0,
 				userList: [],
-				battleUser: []
+				battleUser: [],
+				playList: [],
+				limitTime: 0
 			}
 		},
 		onLoad(params) {
@@ -47,12 +49,58 @@
 				title: this.matchBaseInfo.name
 			})
 			this.getUserList()
+			this.getPlayList()
+			this.getSettings()
 		},
 		async onPullDownRefresh() {
 			await this.getUserList()
+			await this.getPlayList()
 			uni.stopPullDownRefresh()
 		},
 		methods: {
+			async getSettings() {
+				uni.showLoading()
+				let fn = uniCloud.importObject('settings')
+				this.limitTime = await fn.getLimitTime()
+				uni.hideLoading()
+			},
+			async getPlayList() {
+				let postData = this.getCurrentWeek()
+				let that = this
+				uni.showLoading()
+				await uniCloud.callFunction({
+					name: 'section',
+					data: {
+						action: 'getDateList',
+						params: postData
+					},
+					success(res) {
+						that.playList = res.result.data
+						uni.hideLoading()
+					},
+					fail() {
+						uni.hideLoading()
+					}
+				})
+			},
+			getCurrentWeek() {
+				//获取当前时间
+				const currentDate = new Date()
+				//返回date是一周中的某一天
+				const week = currentDate.getDay()
+				//一天的毫秒数
+				const millisecond = 1000 * 60 * 60 * 24
+				//减去的天数
+				const minusDay = week != 0 ? week - 1 : 6
+				//本周 周一
+				const monday = new Date(currentDate.getTime() - minusDay * millisecond)
+				//本周 周日
+				const sunday = new Date(monday.getTime() + 6 * millisecond)
+				return {
+					startTime: monday,
+					endTime: sunday
+				}
+			},
 			handleSure() {
 				console.log(this.matchBaseInfo);
 				const postData = {
@@ -65,6 +113,7 @@
 								return {
 									userId: el,
 									nickname: this.userList[i].nickname || '傻子',
+									horse:this.userList[i].horse,
 									avatar: this.userList[i].avatar || this.userList[i]?.avatar_file?.url ||
 										'https://vkceyugu.cdn.bspapp.com/VKCEYUGU-76ce2c5e-31c7-4d81-8fcf-ed1541ecbc6e/b88a7e17-35f0-4d0d-bc32-93f8909baf03.jpg'
 								}
@@ -83,6 +132,7 @@
 				return false
 			},
 			async getUserList() {
+				uni.showLoading()
 				await uniCloud.callFunction({
 					name: 'user',
 					data: {
@@ -91,6 +141,10 @@
 					},
 					success: (res) => {
 						this.userList = res.result.data
+						uni.hideLoading()
+					},
+					fail() {
+						uni.hideLoading()
 					}
 				})
 			},
@@ -103,9 +157,58 @@
 				if (battleIndex !== -1) {
 					this.battleUser.splice(battleIndex, 1)
 				} else {
-					if (this.battleUser.length < 2) {
+					if(this.battleUser.length<1){
 						this.battleUser.push(userId)
 					}
+					else if (this.battleUser.length < 2) {
+						let otherOne = this.userList.find(el=>el._id==userId)
+						if(otherOne.matchTime>=this.limitTime){
+							uni.showToast({
+								icon:"error",
+								title:'本周对战已完成'
+							})
+							return
+						}
+						this.battleUser.push(userId)
+					}
+				}
+				this.checkHasMatch()
+			},
+			checkHasMatch() {
+				if (this.battleUser.length == 1) {
+					let userId = this.battleUser[0]
+					//与当前选中用户关联的数据
+					let connectList = this.playList.filter(item => item.winner.userId == userId || item.loser.userId ==
+						userId)
+					//记录匹配用户
+					let mapUser = {}
+					connectList.forEach(item => {
+						// 如果对战胜利
+						if (item.winner.userId == userId) {
+							if (mapUser[item.loser.userId]) {
+								mapUser[item.loser.userId]++
+							} else {
+								mapUser[item.loser.userId] = 1
+							}
+						}
+						if (item.loser.userId == userId) {
+							if (mapUser[item.winner.userId]) {
+								mapUser[item.winner.userId]++
+							} else {
+								mapUser[item.winner.userId] = 1
+							}
+						}
+					})
+					this.userList.forEach(user => {
+						if (mapUser[user._id]) {
+							user.matchTime = mapUser[user._id]
+						}
+					})
+				}
+				else{
+					this.userList.forEach(user=>{
+						user.matchTime = 0
+					})
 				}
 			},
 			handleBoard() {
@@ -186,7 +289,9 @@
 		align-items: center;
 		justify-content: center;
 	}
-
+	.limit{
+		opacity: 0.1;
+	}
 	.grid-item-box-row {
 		flex: 1;
 		// position: relative;

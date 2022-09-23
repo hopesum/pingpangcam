@@ -85,7 +85,6 @@
 				let x = this.latitude - this.currentLatitude
 				let y = this.longitude - this.currentLongitude
 				let d = Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2)))
-				console.log(d, '******');
 				this.distance = d
 				// 0.001  100m
 				if (d <= this.distanceRule && d > 0 && this.hasLogin) {
@@ -107,16 +106,35 @@
 			}
 		},
 		onLoad() {
-			console.log(this.hasLogin, '???')
+			uni.showToast({
+				icon: 'loading',
+				title: '',
+				duration: 4000,
+				mask: true
+			})
 			this.getRules()
 			this.getLocation()
 			this.getSignRecord()
 		},
 		async onPullDownRefresh() {
+			uni.showToast({
+				icon: 'loading',
+				title: '',
+				duration: 4000,
+				mask: true
+			})
 			await this.getLocation()
 			await this.getRules()
 			await this.getSignRecord()
 			uni.stopPullDownRefresh()
+		},
+		onShareAppMessage(res) {
+			let pages = getCurrentPages()
+			let fullPath = pages[pages.length - 1].$page.fullPath
+			return {
+				title: '打卡考勤',
+				path: fullPath
+			}
 		},
 		methods: {
 			dateFormat(time, flag) {
@@ -143,10 +161,6 @@
 				let that = this
 				uni.chooseLocation({
 					success: function(res) {
-						console.log('位置名称：' + res.name);
-						console.log('详细地址：' + res.address);
-						console.log('纬度：' + res.latitude);
-						console.log('经度：' + res.longitude);
 						that.latitude = res.latitude
 						that.longitude = res.longitude
 						that.address = res.address
@@ -155,7 +169,6 @@
 				});
 			},
 			confirmDistance() {
-				console.log(this.distanceRule, 'distanceeRule');
 				this.addRule()
 			},
 			async getLocation() {
@@ -163,45 +176,26 @@
 				var myAmapFun = new amapFile.AMapWX({
 					key: '2cb5a0de8824b9bae96b4f25889fe053'
 				});
+				uni.showLoading()
 				myAmapFun.getRegeo({
 					success: function(data) {
-						console.log(data, '高德获取地址');
 						let res = data[0]
 						that.currentLatitude = res.latitude
 						that.currentLongitude = res.longitude
 						that.currentAddress = res.regeocodeData.formatted_address
+						uni.hideLoading()
 						//成功回调
 					},
 					fail: function(info) {
+						uni.hideLoading()
 						//失败回调
 						console.log(info)
 					}
 				})
-				// let that = this
-				// uni.getLocation({
-				// 	type: 'gcj02',
-				// 	altitude: true,
-				// 	isHighAccuracy: true, //高精度定位
-				// 	highAccuracyExpireTime: 4000,
-				// 	success: function(res) {
-				// 		console.log('res', res);
-				// 		that.currentLatitude = res.latitude
-				// 		that.currentLongitude = res.longitude
-				// 		console.log('that.currentLatitude  x', that.currentLatitude);
-				// 		console.log('that.currentLongitude  y', that.currentLongitude);
-				// 	},
-				// 	fail: function() {
-				// 		uni.showToast({
-				// 			title: '获取地址失败，将导致部分功能不可用',
-				// 			icon: 'none'
-				// 		});
-				// 		that.currentLatitude = 0
-				// 		that.currentLongitude = 0
-				// 	}
-				// });
 			},
 			async getRules() {
 				let that = this
+				uni.showLoading()
 				await uniCloud.callFunction({
 					name: 'sign',
 					data: {
@@ -213,11 +207,10 @@
 						that.longitude = res.result?.data[0]?.longitude
 						that.address = res.result?.data[0]?.address
 						that.distanceRule = res.result?.data[0]?.distanceRule || 0
-
-						console.log(that.latitude, 'x');
-						console.log(that.longitude, 'y');
-						console.log(that.address);
-						console.log(that.distanceRule);
+						uni.hideLoading()
+					},
+					fail() {
+						uni.hideLoading()
 					}
 				})
 			},
@@ -231,7 +224,7 @@
 							params: {
 								_id: that.ruleId,
 								latitude: that.latitude,
-								longitude: that.longitude,								
+								longitude: that.longitude,
 								address: that.address,
 								distanceRule: that.distanceRule
 							}
@@ -274,6 +267,7 @@
 				this.sendQYWX(data)
 			},
 			handleSign() {
+
 				let that = this
 				if (!this.isCanSign) {
 					uni.showToast({
@@ -282,6 +276,12 @@
 					})
 					return
 				}
+				uni.showToast({
+					icon: 'loading',
+					title: '',
+					duration: 4000,
+					mask: true
+				})
 				// 当天打卡可以无限次数更新
 				let oprate = 'add'
 				let currentDay = this.dateFormat(new Date(), true)
@@ -299,6 +299,7 @@
 							action: 'addSignRecord',
 							params: {
 								userId: this.userInfo._id,
+								avatar:this.userInfo.avatar_file.url||'https://w.wallhaven.cc/full/v9/wallhaven-v9w635.jpg',
 								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								address: this.currentAddress,
@@ -334,6 +335,7 @@
 							params: {
 								_id: that.lastSign._id,
 								userId: this.userInfo._id,
+								avatar:this.userInfo.avatar_file.url||'https://w.wallhaven.cc/full/v9/wallhaven-v9w635.jpg',
 								userName: this.userInfo.nickname,
 								createTime: new Date(),
 								latitude: this.currentLatitude,
@@ -445,6 +447,7 @@
 			},
 			async getSignRecord() {
 				let that = this
+				uni.showLoading()
 				await uniCloud.callFunction({
 					name: 'signRecord',
 					data: {
@@ -455,6 +458,10 @@
 					},
 					success(res) {
 						that.lastSign = res.result?.data[0] || {}
+						uni.hideLoading()
+					},
+					fail() {
+						uni.hideLoading()
 					}
 				})
 			},

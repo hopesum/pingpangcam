@@ -7,20 +7,54 @@ let reward = [
 	[30, 0.1],
 	[45, 0.1],
 ]
-let notice = '打卡奖励开启，每日只能获取一次奖励积分，最高可随机获取100积分，获取的积分将计入总积分，快来打卡参与吧！'
+
 let baseWeight = 500
 let goodsList = [
-		{id:'0',title:'可乐*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/可乐.2c10znbzvdno.jpeg',price:baseWeight*3*10},
-		{id:'1',title:'雪碧*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/雪碧.1tzjh802f2e.jpeg',price:baseWeight*3*10},
-		{id:'2',title:'怡宝*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/怡宝.iea9p5f7bg8.jpeg',price:baseWeight*2*10},
-		{id:'3',title:'农夫山泉*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/农夫山泉.7b5fnxyezkg0.jpeg',price:baseWeight*2*10},
-		{id:'4',title:'普狂3*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/普狂.3h7w8g7utxi0.jpeg',price:baseWeight*90*10},
-		{id:'5',title:'橙省狂3*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/橙省狂.5jd22p10n440.jpeg',price:baseWeight*150*10},
-		{id:'6',title:'蓝省狂3*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/蓝省狂.2ouj0o2o2bw0.jpeg',price:baseWeight*180*10},
-		{id:'7',title:'CJ8000*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/草鸡八千.2m23f4rg9di0.jpeg',price:baseWeight*50*10},
-		{id:'8',title:'DOCIN F1*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/多尼克f1.6o04u0o4j5w0.jpeg',price:baseWeight*170*10},
-		{id:'9',title:'ROZENA套胶*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/rozena.6ug45n93cww0.jpeg',price:baseWeight*190*10},
-	]
+	// {id:'0',title:'可乐*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/可乐.2c10znbzvdno.jpeg',price:baseWeight*3*10},
+	// {id:'1',title:'雪碧*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/雪碧.1tzjh802f2e.jpeg',price:baseWeight*3*10},
+	// {id:'2',title:'怡宝*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/怡宝.iea9p5f7bg8.jpeg',price:baseWeight*2*10},
+	// {id:'3',title:'农夫山泉*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/农夫山泉.7b5fnxyezkg0.jpeg',price:baseWeight*2*10},
+	{
+		id: '4',
+		title: '普狂3*1',
+		url: 'https://cdn.staticaly.com/gh/yuguaa/images@master/普狂.3h7w8g7utxi0.jpeg',
+		price: baseWeight * 90 * 10
+	},
+	{
+		id: '5',
+		title: '橙省狂3*1',
+		url: 'https://cdn.staticaly.com/gh/yuguaa/images@master/橙省狂.5jd22p10n440.jpeg',
+		price: baseWeight * 150 * 10
+	},
+	{
+		id: '6',
+		title: '蓝省狂3*1',
+		url: 'https://cdn.staticaly.com/gh/yuguaa/images@master/蓝省狂.2ouj0o2o2bw0.jpeg',
+		price: baseWeight * 180 * 10
+	},
+	// {id:'7',title:'CJ8000*1',url:'https://cdn.staticaly.com/gh/yuguaa/images@master/草鸡八千.2m23f4rg9di0.jpeg',price:baseWeight*50*10},
+	{
+		id: '8',
+		title: 'DOCIN F1*1',
+		url: 'https://cdn.staticaly.com/gh/yuguaa/images@master/多尼克f1.6o04u0o4j5w0.jpeg',
+		price: baseWeight * 170 * 10
+	},
+	{
+		id: '9',
+		title: 'ROZENA套胶*1',
+		url: 'https://cdn.staticaly.com/gh/yuguaa/images@master/rozena.6ug45n93cww0.jpeg',
+		price: baseWeight * 190 * 10
+	},
+]
+let limitTime = 2
+
+let limitDay = 30 //统计多少天内的对局
+let limitSection = 10 //拥有自动赋马权限的对局数量
+let fineHorse = 8 //上等马数量
+let moderateHorse = 8 //中等马数量
+
+let notice = '打卡奖励开启，每日只能获取一次奖励积分，最高可随机获取100积分，获取的积分将计入总积分，快来打卡参与吧！'
+notice = `自动赋马机制开启，对局超过${limitSection}可参加自动排名，排名规则依据最近${limitDay}天内对局胜率高低进行评比，将会评出上等马${fineHorse}匹，中等马${moderateHorse}匹`
 module.exports = {
 	getSettings() {
 		return showVideo
@@ -34,7 +68,18 @@ module.exports = {
 	getReward() {
 		return reward
 	},
-	getGoodsList(){
+	getGoodsList() {
 		return goodsList
+	},
+	getLimitTime() {
+		return limitTime
+	},
+	getHorseSetting() {
+		return {
+			limitDay,
+			limitSection,
+			fineHorse,
+			moderateHorse
+		}
 	}
 }

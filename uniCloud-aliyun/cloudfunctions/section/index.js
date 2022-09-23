@@ -126,6 +126,50 @@ exports.main = async (event, context) => {
 			const postData = Object.assign({}, params)
 			delete postData._id
 			res = await collection.doc(params._id).update(postData)
+		case 'getDateList':
+			let res4 = []
+			for (let i = 0; i < pageTotalNum; i++) {
+				let list = await collection.where({
+					createTime: db.command.and(db.command.gte(params.startTime), db.command.lte(params
+						.endTime))
+				}).skip(i * pageSize).get()
+				res4 = [...res4, ...list.data]
+			}
+			res.data = res4
+			res.data.forEach(section => {
+				console.log(section.createUser);
+				let judge = userList.find(user => user._id === section.createUser)
+				section.createUserName = judge.nickname
+				let winner = userList.find(user => user._id === section.winner.userId)
+				let loser = userList.find(user => user._id === section.loser.userId)
+				section.winner.nickname = winner.nickname
+				winner.avatar_file.url ? section.winner.avatar = winner.avatar_file.url : ''
+				section.loser.nickname = loser.nickname
+				loser.avatar_file.url ? section.loser.avatar = loser.avatar_file.url : ''
+			})
+			res.data = res.data.filter(el=>el.type!='SIGN'&&el.type!='EXCHANGE')
+			break
+			case 'getLimitHorseAllSectionList':
+				let res55 = []
+				for (let i = 0; i < pageTotalNum; i++) {
+					let list = await collection.where({
+					createTime: db.command.and(db.command.gte(params.startTime), db.command.lte(params
+						.endTime))
+				}).orderBy('createTime', 'desc').skip(i * pageSize).get()
+					res55 = [...res55, ...list.data]
+				}
+				res.data = res55
+				res.data.forEach(section => {
+					let judge = userList.find(user => user._id === section.createUser)
+					section.createUserName = judge.nickname
+					let winner = userList.find(user => user._id === section.winner.userId)
+					let loser = userList.find(user => user._id === section.loser.userId)
+					section.winner.nickname = winner.nickname
+					winner.avatar_file.url ? section.winner.avatar = winner.avatar_file.url : ''
+					section.loser.nickname = loser.nickname
+					loser.avatar_file.url ? section.loser.avatar = loser.avatar_file.url : ''
+				})
+				break
 		default:
 			break
 			return res
